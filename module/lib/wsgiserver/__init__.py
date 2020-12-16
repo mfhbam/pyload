@@ -548,11 +548,10 @@ class HTTPRequest(object):
             return
     
     def _respond(self):
-        if self.chunked_read:
-            if not self.decode_chunked():
-                self.close_connection = True
-                return
-        
+        if self.chunked_read and not self.decode_chunked():
+            self.close_connection = True
+            return
+
         response = self.wsgi_app(self.environ, self.start_response)
         try:
             for chunk in response:
@@ -567,7 +566,7 @@ class HTTPRequest(object):
         finally:
             if hasattr(response, "close"):
                 response.close()
-        
+
         if (self.ready and not self.sent_headers):
             self.sent_headers = True
             self.send_headers()
@@ -641,7 +640,7 @@ class HTTPRequest(object):
         """Assert, process, and send the HTTP response message-headers."""
         hkeys = [key.lower() for key, value in self.outheaders]
         status = int(self.status[:3])
-        
+
         if status == 413:
             # Request Entity Too Large. Close conn to avoid garbage.
             self.close_connection = True
@@ -649,9 +648,7 @@ class HTTPRequest(object):
             # "All 1xx (informational), 204 (no content),
             # and 304 (not modified) responses MUST NOT
             # include a message-body." So no point chunking.
-            if status < 200 or status in (204, 205, 304):
-                pass
-            else:
+            if status >= 200 and status not in (204, 205, 304):
                 if (self.response_protocol == 'HTTP/1.1'
                     and self.environ["REQUEST_METHOD"] != 'HEAD'):
                     # Use the chunked transfer-coding
@@ -660,7 +657,7 @@ class HTTPRequest(object):
                 else:
                     # Closing the conn is the only way to determine len.
                     self.close_connection = True
-        
+
         if "connection" not in hkeys:
             if self.response_protocol == 'HTTP/1.1':
                 # Both server and client are HTTP/1.1 or better
@@ -670,7 +667,7 @@ class HTTPRequest(object):
                 # Server and/or client are HTTP/1.0
                 if not self.close_connection:
                     self.outheaders.append(("Connection", "Keep-Alive"))
-        
+
         if (not self.close_connection) and (not self.chunked_read):
             # Read any remaining request body data on the socket.
             # "If an origin server receives a request that does not include an
@@ -687,13 +684,13 @@ class HTTPRequest(object):
             size = self.rfile.maxlen - self.rfile.bytes_read
             if size > 0:
                 self.rfile.read(size)
-        
+
         if "date" not in hkeys:
             self.outheaders.append(("Date", rfc822.formatdate()))
-        
+
         if "server" not in hkeys:
             self.outheaders.append(("Server", self.environ['SERVER_SOFTWARE']))
-        
+
         buf = [self.environ['ACTUAL_SERVER_PROTOCOL'], " ", self.status, "\r\n"]
         try:
             buf += [k + ": " + v + "\r\n" for k, v in self.outheaders]
@@ -768,7 +765,6 @@ if not _fileobject_uses_str_type:
                     if not data:
                         break
                     buf.write(data)
-                return buf.getvalue()
             else:
                 # Read until size bytes or EOF seen, whichever comes first
                 buf_len = buf.tell()
@@ -808,7 +804,8 @@ if not _fileobject_uses_str_type:
                     buf_len += n
                     del data  # explicit free
                     #assert buf_len == buf.tell()
-                return buf.getvalue()
+
+            return buf.getvalue()
 
         def readline(self, size=-1):
             buf = self._rbuf
@@ -852,7 +849,6 @@ if not _fileobject_uses_str_type:
                         del data
                         break
                     buf.write(data)
-                return buf.getvalue()
             else:
                 # Read until size bytes or \n or EOF seen, whichever comes first
                 buf.seek(0, 2)  # seek end
@@ -875,13 +871,12 @@ if not _fileobject_uses_str_type:
                         nl += 1
                         # save the excess data to _rbuf
                         self._rbuf.write(data[nl:])
-                        if buf_len:
-                            buf.write(data[:nl])
-                            break
-                        else:
+                        if not buf_len:
                             # Shortcut.  Avoid data copy through buf when returning
                             # a substring of our first recv().
                             return data[:nl]
+                        buf.write(data[:nl])
+                        break
                     n = len(data)
                     if n == size and not buf_len:
                         # Shortcut.  Avoid data copy through buf when
@@ -893,8 +888,9 @@ if not _fileobject_uses_str_type:
                         break
                     buf.write(data)
                     buf_len += n
-                    #assert buf_len == buf.tell()
-                return buf.getvalue()
+                            #assert buf_len == buf.tell()
+
+            return buf.getvalue()
 
 else:
     class CP_fileobject(socket._fileobject):
@@ -933,17 +929,12 @@ else:
                 # Read until EOF
                 buffers = [self._rbuf]
                 self._rbuf = ""
-                if self._rbufsize <= 1:
-                    recv_size = self.default_bufsize
-                else:
-                    recv_size = self._rbufsize
-
+                recv_size = self.default_bufsize if self._rbufsize <= 1 else self._rbufsize
                 while True:
                     data = self.recv(recv_size)
                     if not data:
                         break
                     buffers.append(data)
-                return "".join(buffers)
             else:
                 # Read until size bytes or EOF seen, whichever comes first
                 data = self._rbuf
@@ -968,7 +959,8 @@ else:
                         buffers[-1] = data[:left]
                         break
                     buf_len += n
-                return "".join(buffers)
+
+            return "".join(buffers)
 
         def readline(self, size=-1):
             data = self._rbuf
@@ -1004,7 +996,6 @@ else:
                         self._rbuf = data[nl:]
                         buffers[-1] = data[:nl]
                         break
-                return "".join(buffers)
             else:
                 # Read until size bytes or \n or EOF seen, whichever comes first
                 nl = data.find('\n', 0, size)
@@ -1038,7 +1029,8 @@ else:
                         buffers[-1] = data[:left]
                         break
                     buf_len += n
-                return "".join(buffers)
+
+            return "".join(buffers)
     
 
 class SSL_fileobject(CP_fileobject):
@@ -1293,7 +1285,7 @@ class ThreadPool(object):
     
     def start(self):
         """Start the pool of threads."""
-        for i in xrange(self.min):
+        for _ in xrange(self.min):
             self._threads.append(WorkerThread(self.server))
         for worker in self._threads:
             worker.setName("CP WSGIServer " + worker.getName())
@@ -1314,7 +1306,7 @@ class ThreadPool(object):
     
     def grow(self, amount):
         """Spawn new worker threads (not above self.max)."""
-        for i in xrange(amount):
+        for _ in xrange(amount):
             if self.max > 0 and len(self._threads) >= self.max:
                 break
             worker = WorkerThread(self.server)
@@ -1330,9 +1322,9 @@ class ThreadPool(object):
             if not t.isAlive():
                 self._threads.remove(t)
                 amount -= 1
-        
+
         if amount > 0:
-            for i in xrange(min(amount, len(self._threads) - self.min)):
+            for _ in xrange(min(amount, len(self._threads) - self.min)):
                 # Put a number of shutdown requests on the queue equal
                 # to 'amount'. Once each of those is processed by a worker,
                 # that worker will terminate and be culled from our list

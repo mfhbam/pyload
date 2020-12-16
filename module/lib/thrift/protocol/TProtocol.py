@@ -183,22 +183,6 @@ class TProtocolBase:
         self.skip(type)
         self.readFieldEnd()
       self.readStructEnd()
-    elif type == TType.MAP:
-      (ktype, vtype, size) = self.readMapBegin()
-      for i in range(size):
-        self.skip(ktype)
-        self.skip(vtype)
-      self.readMapEnd()
-    elif type == TType.SET:
-      (etype, size) = self.readSetBegin()
-      for i in range(size):
-        self.skip(etype)
-      self.readSetEnd()
-    elif type == TType.LIST:
-      (etype, size) = self.readListBegin()
-      for i in range(size):
-        self.skip(etype)
-      self.readListEnd()
 
   # tuple of: ( 'reader method' name, is_container boolean, 'writer_method' name )
   _TTYPE_HANDLERS = (
@@ -250,7 +234,7 @@ class TProtocolBase:
       # this is like an inlined readFieldByTType
       container_reader = self._TTYPE_HANDLERS[list_type][0]
       val_reader = getattr(self, container_reader)
-      for idx in xrange(list_len):
+      for _ in xrange(list_len):
         val = val_reader(tspec)
         results.append(val)
     self.readListEnd()
@@ -269,8 +253,8 @@ class TProtocolBase:
     else:
       container_reader = self._TTYPE_HANDLERS[set_type][0]
       val_reader = getattr(self, container_reader)
-      for idx in xrange(set_len):
-        results.add(val_reader(tspec)) 
+      for _ in xrange(set_len):
+        results.add(val_reader(tspec))
     self.readSetEnd()
     return results
 
@@ -281,7 +265,7 @@ class TProtocolBase:
     return obj
   
   def readContainerMap(self, spec):
-    results = dict()
+    results = {}
     key_ttype, key_spec = spec[0], spec[1]
     val_ttype, val_spec = spec[2], spec[3]
     (map_ktype, map_vtype, map_len) = self.readMapBegin()
@@ -289,7 +273,7 @@ class TProtocolBase:
     key_reader = getattr(self, self._TTYPE_HANDLERS[key_ttype][0])
     val_reader = getattr(self, self._TTYPE_HANDLERS[val_ttype][0])
     # list values are simple types
-    for idx in xrange(map_len):
+    for _ in xrange(map_len):
       if key_spec is None:
         k_val = key_reader()
       else:
@@ -331,11 +315,10 @@ class TProtocolBase:
     self.writeListBegin(spec[0], len(val))
     r_handler, w_handler, is_container  = self._TTYPE_HANDLERS[spec[0]]
     e_writer = getattr(self, w_handler)
-    if not is_container:
-      for elem in val:
+    for elem in val:
+      if not is_container:
         e_writer(elem)
-    else:
-      for elem in val:
+      else:
         e_writer(elem, spec[1])
     self.writeListEnd()
 
@@ -343,11 +326,10 @@ class TProtocolBase:
     self.writeSetBegin(spec[0], len(val))
     r_handler, w_handler, is_container = self._TTYPE_HANDLERS[spec[0]]
     e_writer = getattr(self, w_handler)
-    if not is_container:
-      for elem in val:
+    for elem in val:
+      if not is_container:
         e_writer(elem)
-    else:
-      for elem in val:
+      else:
         e_writer(elem, spec[1])
     self.writeSetEnd()
 

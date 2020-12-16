@@ -32,8 +32,16 @@ def myquote(url):
     
 def myurlencode(data):
     data = dict(data)
-    return urlencode(dict((x.encode('utf_8') if isinstance(x, unicode) else x, \
-        y.encode('utf_8') if isinstance(y, unicode) else y ) for x, y in data.iteritems()))
+    return urlencode(
+        {
+            x.encode('utf_8')
+            if isinstance(x, unicode)
+            else x: y.encode('utf_8')
+            if isinstance(y, unicode)
+            else y
+            for x, y in data.iteritems()
+        }
+    )
 
 bad_headers = range(400, 404) + range(405, 418) + range(500, 506)
 
@@ -160,9 +168,7 @@ class HTTPRequest():
             if not multipart:
                 if type(post) == unicode:
                     post = str(post) #unicode not allowed
-                elif type(post) == str:
-                    pass
-                else:
+                elif type(post) != str:
                     post = myurlencode(post)
 
                 self.c.setopt(pycurl.POSTFIELDS, post)
@@ -273,9 +279,8 @@ class HTTPRequest():
         if self.rep.tell() > 1000000 or self.abort:
             rep = self.getResponse()
             if self.abort: raise Abort()
-            f = open("response.dump", "wb")
-            f.write(rep)
-            f.close()
+            with open("response.dump", "wb") as f:
+                f.write(rep)
             raise Exception("Loaded Url exceeded limit")
 
         self.rep.write(buf)

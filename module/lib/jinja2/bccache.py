@@ -64,10 +64,7 @@ class Bucket(object):
             return
         # now load the code.  Because marshal is not able to load
         # from arbitrary streams we have to work around that
-        if isinstance(f, file):
-            self.code = marshal.load(f)
-        else:
-            self.code = marshal.loads(f.read())
+        self.code = marshal.load(f) if isinstance(f, file) else marshal.loads(f.read())
 
     def write_bytecode(self, f):
         """Dump the bytecode into the file or file like object passed."""

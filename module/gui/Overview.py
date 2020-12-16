@@ -43,11 +43,7 @@ class OverviewModel(QAbstractListModel):
         self.packages = []
         
         def partsFinished(p):
-            f = 0
-            for c in p.children:
-                if c.data["status"] == 0:
-                    f += 1
-            return f
+            return sum(1 for c in p.children if c.data["status"] == 0)
         
         def maxSize(p):
             ms = 0

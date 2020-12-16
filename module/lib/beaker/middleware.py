@@ -65,10 +65,9 @@ class CacheMiddleware(object):
         self.environ_key = environ_key
     
     def __call__(self, environ, start_response):
-        if environ.get('paste.registry'):
-            if environ['paste.registry'].reglist:
-                environ['paste.registry'].register(self.cache,
-                                                   self.cache_manager)
+        if environ.get('paste.registry') and environ['paste.registry'].reglist:
+            environ['paste.registry'].register(self.cache,
+                                               self.cache_manager)
         environ[self.environ_key] = self.cache_manager
         return self.app(environ, start_response)
 

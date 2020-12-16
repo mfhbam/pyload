@@ -38,10 +38,9 @@ class FastixRu(MultiAccount):
         kb     = float(points) * 1024 ** 2 / 1000
 
         if points > 0:
-            account_info = {'validuntil': -1, 'trafficleft': kb}
+            return {'validuntil': -1, 'trafficleft': kb}
         else:
-            account_info = {'validuntil': None, 'trafficleft': None, 'premium': False}
-        return account_info
+            return {'validuntil': None, 'trafficleft': None, 'premium': False}
 
 
     def signin(self, user, password, data):

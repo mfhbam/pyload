@@ -76,11 +76,10 @@ class AccountModel(QAbstractItemModel):
                 if not self.toData(index).validuntil:
                     return QVariant(_("n/a"))
                 until = int(self.toData(index).validuntil)
-                if until > 0:
-                    fmtime = strftime(_("%a, %d %b %Y %H:%M"), gmtime(until))
-                    return QVariant(fmtime)
-                else:
+                if until <= 0:
                     return QVariant(_("unlimited"))
+                fmtime = strftime(_("%a, %d %b %Y %H:%M"), gmtime(until))
+                return QVariant(fmtime)
         #elif role == Qt.EditRole:
         #    if index.column() == 0:
         #        return QVariant(index.internalPointer().data["name"])
@@ -92,13 +91,12 @@ class AccountModel(QAbstractItemModel):
         """
         if parent == QModelIndex() and len(self._data) > row:
             pointer = self._data[row]
-            index = self.createIndex(row, column, pointer)
+            return self.createIndex(row, column, pointer)
         elif parent.isValid():
             pointer = parent.internalPointer().children[row]
-            index = self.createIndex(row, column, pointer)
+            return self.createIndex(row, column, pointer)
         else:
-            index = QModelIndex()
-        return index
+            return QModelIndex()
     
     def parent(self, index):
         """
@@ -121,10 +119,7 @@ class AccountModel(QAbstractItemModel):
         """
             everything on top level
         """
-        if parent == QModelIndex():
-            return True
-        else:
-            return False
+        return parent == QModelIndex()
     
     def canFetchMore(self, parent):
         return False

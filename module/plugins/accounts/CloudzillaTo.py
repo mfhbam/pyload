@@ -22,7 +22,7 @@ class CloudzillaTo(Account):
     def grab_info(self, user, password, data):
         html = self.load("http://www.cloudzilla.to/")
 
-        premium = True if re.search(self.PREMIUM_PATTERN, html) else False
+        premium = bool(re.search(self.PREMIUM_PATTERN, html))
 
         return {'validuntil': -1, 'trafficleft': -1, 'premium': premium}
 

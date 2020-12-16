@@ -307,7 +307,7 @@ class Value(object):
         try:
             stored, expired, value = value
         except ValueError:
-            if not len(value) == 2:
+            if len(value) != 2:
                 raise
             # Old format: upgrade
             stored, value = value
@@ -320,7 +320,7 @@ class Value(object):
             # occurs when the value is None.  memcached 
             # may yank the rug from under us in which case 
             # that's the result
-            raise KeyError(self.key)            
+            raise KeyError(self.key)
         return stored, expired, value
 
     def set_value(self, value, storedtime=None):
@@ -554,21 +554,17 @@ class FileNamespaceManager(OpenResourceNamespaceManager):
 
     def do_open(self, flags):
         if self.file_exists(self.file):
-            fh = open(self.file, 'rb')
-            try:
-                self.hash = cPickle.load(fh)
-            except (IOError, OSError, EOFError, cPickle.PickleError, ValueError):
-                pass
-            fh.close()
-
+            with open(self.file, 'rb') as fh:
+                try:
+                    self.hash = cPickle.load(fh)
+                except (IOError, OSError, EOFError, cPickle.PickleError, ValueError):
+                    pass
         self.flags = flags
         
     def do_close(self):
-        if self.flags == 'c' or self.flags == 'w':
-            fh = open(self.file, 'wb')
-            cPickle.dump(self.hash, fh)
-            fh.close()
-
+        if self.flags in ['c', 'w']:
+            with open(self.file, 'wb') as fh:
+                cPickle.dump(self.hash, fh)
         self.hash = {}
         self.flags = None
                 

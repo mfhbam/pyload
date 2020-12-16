@@ -123,8 +123,7 @@ class TBufferedTransportFactory:
   """Factory transport that builds buffered transports"""
 
   def getTransport(self, trans):
-    buffered = TBufferedTransport(trans)
-    return buffered
+    return TBufferedTransport(trans)
 
 
 class TBufferedTransport(TTransportBase,CReadableTransport):
@@ -202,10 +201,7 @@ class TMemoryBuffer(TTransportBase, CReadableTransport):
 
     If value is set, this will be a transport for reading,
     otherwise, it is for writing"""
-    if value is not None:
-      self._buffer = StringIO(value)
-    else:
-      self._buffer = StringIO()
+    self._buffer = StringIO(value) if value is not None else StringIO()
 
   def isOpen(self):
     return not self._buffer.closed
@@ -242,8 +238,7 @@ class TFramedTransportFactory:
   """Factory transport that builds framed transports"""
 
   def getTransport(self, trans):
-    framed = TFramedTransport(trans)
-    return framed
+    return TFramedTransport(trans)
 
 
 class TFramedTransport(TTransportBase, CReadableTransport):

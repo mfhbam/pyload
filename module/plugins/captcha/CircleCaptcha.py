@@ -74,11 +74,9 @@ class CircleCaptcha(OCR):
                     if howmany == 0:
                         #: Found pixel
                         jump = True
-                        howmany = howmany + 1
                         curcolor = curpix
-                        # self.log_debug(x, y, jump, 2)
-                    else:
-                        howmany = howmany + 1
+                                        # self.log_debug(x, y, jump, 2)
+                    howmany += 1
             if howmany == 1:
                 #: Clean pixel
                 pix[x-1, y] = self.BACKGROUND
@@ -105,11 +103,9 @@ class CircleCaptcha(OCR):
                     if howmany == 0:
                         #: Found pixel
                         jump = True
-                        howmany = howmany + 1
                         curcolor = curpix
-                        # self.log_debug(x, y, jump)
-                    else:
-                        howmany = howmany + 1
+                                        # self.log_debug(x, y, jump)
+                    howmany += 1
             if howmany == 1:
                 #: Clean pixel
                 pix[x-1, y] = self.BACKGROUND
@@ -127,7 +123,7 @@ class CircleCaptcha(OCR):
             curpix = pix[x, cury]
 
             if curpix < self.BLACKCOLOR:
-                blackfound = blackfound + 1
+                blackfound += 1
                 if ExitWithBlack is True and blackfound >= 3:
                     break  #: Exit if found black
                 else:
@@ -138,12 +134,14 @@ class CircleCaptcha(OCR):
                 jump = False
                 continue
 
-            if (curpix < self.BACKGROUND and color == -1) or (curpix == color and color > -1):
-                if jump is False:
-                    #: Found pixel
-                    curcolor = curpix
-                    newx = x, curcolor
-                    break
+            if (
+                (curpix < self.BACKGROUND and color == -1)
+                or (curpix == color and color > -1)
+            ) and not jump:
+                #: Found pixel
+                curcolor = curpix
+                newx = x, curcolor
+                break
 
         return newx
 
@@ -157,16 +155,15 @@ class CircleCaptcha(OCR):
             curpix = pix[x, cury]
 
             if curpix < self.BLACKCOLOR:
-                blackfound = blackfound + 1
+                blackfound += 1
                 if ExitWithBlack is True and blackfound >= 3:
                     break  #: Exit if found black
                 else:
                     continue
 
-            if curpix >= self.BACKGROUND:
-                if newx != (-1, -1):
-                    #: Found last pixel and the first white
-                    break
+            if curpix >= self.BACKGROUND and newx != (-1, -1):
+                #: Found last pixel and the first white
+                break
 
             if (curpix < self.BACKGROUND and color == -1) or (curpix == color and color > -1):
                 #: Found pixel
@@ -188,16 +185,15 @@ class CircleCaptcha(OCR):
             curpix = pix[curx, y]
 
             if curpix < self.BLACKCOLOR:
-                blackfound = blackfound + 1
+                blackfound += 1
                 if ExitWithBlack is True and blackfound >= 3:
                     break  #: Exit if found black
                 else:
                     continue
 
-            if curpix >= self.BACKGROUND:
-                if newy != (-1, -1):
-                    #: Found last pixel and the first white
-                    break
+            if curpix >= self.BACKGROUND and newy != (-1, -1):
+                #: Found last pixel and the first white
+                break
 
             if (curpix < self.BACKGROUND and color == -1) or (curpix == color and color > -1):
                 #: Found pixel
@@ -278,19 +274,19 @@ class CircleCaptcha(OCR):
 
         cardinalpoints = 0
         if self.verify_point(im, pix, c[0] + c[2], c[1], True) == 1:
-            cardinalpoints = cardinalpoints + 1
+            cardinalpoints += 1
         if self.verify_point(im, pix, c[0] + c[2], c[1], False) == -1:
             return -2
         if self.verify_point(im, pix, c[0] - c[2], c[1], True) == 1:
-            cardinalpoints = cardinalpoints + 1
+            cardinalpoints += 1
         if self.verify_point(im, pix, c[0] - c[2], c[1], False) == -1:
             return -2
         if self.verify_point(im, pix, c[0], c[1] + c[2], True) == 1:
-            cardinalpoints = cardinalpoints + 1
+            cardinalpoints += 1
         if self.verify_point(im, pix, c[0], c[1] + c[2], False) == -1:
             return -2
         if self.verify_point(im, pix, c[0], c[1] - c[2], True) == 1:
-            cardinalpoints = cardinalpoints + 1
+            cardinalpoints += 1
         if self.verify_point(im, pix, c[0], c[1] - c[2], False) == -1:
             return -2
         if cardinalpoints < 3:
@@ -301,9 +297,9 @@ class CircleCaptcha(OCR):
             y = int(round(c[1]- math.sqrt(c[2]**2-(c[0]-x)**2)))
             y2= int(round(c[1]+ math.sqrt(c[2]**2-(c[0]-x)**2)))
 
-            howmany = howmany + 2
+            howmany += 2
             if self.verify_point(im, pix, x, y, exactfind) == 0:
-                missing = missing + 1
+                missing += 1
                 missinglist.append((x, y))
             else:
                 pointsofcircle.append((x, y))
@@ -312,7 +308,7 @@ class CircleCaptcha(OCR):
                 return -2
 
             if self.verify_point(im, pix, x, y2, exactfind) == 0:
-                missing = missing + 1
+                missing += 1
                 missinglist.append((x, y2))
             else:
                 pointsofcircle.append((x, y2))
@@ -364,19 +360,19 @@ class CircleCaptcha(OCR):
 
         cardinalpoints = 0
         if self.verify_point(im, pix, c[0] + c[2], c[1], True) == 1:
-            cardinalpoints = cardinalpoints + 1
+            cardinalpoints += 1
         if self.verify_point(im, pix, c[0] + c[2], c[1], False) == -1:
             return -2
         if self.verify_point(im, pix, c[0] - c[2], c[1], True) == 1:
-            cardinalpoints = cardinalpoints + 1
+            cardinalpoints += 1
         if self.verify_point(im, pix, c[0] - c[2], c[1], False) == -1:
             return -2
         if self.verify_point(im, pix, c[0], c[1] + c[2], True) == 1:
-            cardinalpoints = cardinalpoints + 1
+            cardinalpoints += 1
         if self.verify_point(im, pix, c[0], c[1] + c[2], False) == -1:
             return -2
         if self.verify_point(im, pix, c[0], c[1] - c[2], True) == 1:
-            cardinalpoints = cardinalpoints + 1
+            cardinalpoints += 1
         if self.verify_point(im, pix, c[0], c[1] - c[2], False) == -1:
             return -2
         if cardinalpoints < 3:
@@ -387,9 +383,9 @@ class CircleCaptcha(OCR):
             y = int(round(c[1]- math.sqrt(c[2]**2-(c[0]-x)**2)))
             y2= int(round(c[1]+ math.sqrt(c[2]**2-(c[0]-x)**2)))
 
-            howmany = howmany + 2
+            howmany += 2
             if self.verify_point(im, pix, x, y, exactfind) == 0:
-                missing = missing + 1
+                missing += 1
                 missinglist.append((x, y))
             else:
                 pointsofcircle.append((x, y))
@@ -398,7 +394,7 @@ class CircleCaptcha(OCR):
                 return -2
 
             if self.verify_point(im, pix, x, y2, exactfind) == 0:
-                missing = missing + 1
+                missing += 1
                 missinglist.append((x, y2))
             else:
                 pointsofcircle.append((x, y2))
@@ -411,9 +407,9 @@ class CircleCaptcha(OCR):
             x = int(round(c[0]- math.sqrt(c[2]**2-(c[1]-y)**2)))
             x2= int(round(c[0]+ math.sqrt(c[2]**2-(c[1]-y)**2)))
 
-            howmany = howmany + 2
+            howmany += 2
             if self.verify_point(im, pix, x, y, exactfind) == 0:
-                missing = missing + 1
+                missing += 1
                 missinglist.append((x, y))
             else:
                 pointsofcircle.append((x, y))
@@ -422,7 +418,7 @@ class CircleCaptcha(OCR):
                 return -2
 
             if self.verify_point(im, pix, x2, y, exactfind) == 0:
-                missing = missing + 1
+                missing += 1
                 missinglist.append((x2, y))
             else:
                 pointsofcircle.append((x2, y))
@@ -434,18 +430,18 @@ class CircleCaptcha(OCR):
                 #: Left and bottom
             if (self.verify_point(im, pix, p[0]-1, p[1], exactfind) == 1
                 and self.verify_point(im, pix, p[0], p[1]+1, exactfind) == 1):
-                missing = missing - 1
+                missing -= 1
             elif (self.verify_point(im, pix, p[0]-1, p[1], exactfind) == 1
                   and self.verify_point(im, pix, p[0], p[1]-1, exactfind) == 1):
-                missing = missing - 1
-                #: Right and bottom
+                missing -= 1
+                        #: Right and bottom
             elif (self.verify_point(im, pix, p[0]+1, p[1], exactfind) == 1
                   and self.verify_point(im, pix, p[0], p[1]+1, exactfind) == 1):
-                missing = missing - 1
-                #: Right and up
+                missing -= 1
+                        #: Right and up
             elif (self.verify_point(im, pix, p[0]+1, p[1], exactfind) == 1
                   and self.verify_point(im, pix, p[0], p[1]-1, exactfind) == 1):
-                missing = missing - 1
+                missing -= 1
 
             if ((p[0], p[1]+1) in missinglist
                 or (p[0], p[1]-1) in missinglist
@@ -456,16 +452,12 @@ class CircleCaptcha(OCR):
                 or (p[0]+1, p[1]-1) in missinglist
                 or (p[0]-1, p[1]-1) in missinglist
                 or self.verify_point(im, pix, p[0], p[1], False) == 1):
-                missingconsecutive = missingconsecutive + 1
-            # else:
-            #     pix[p[0], p[1]] = 0
+                missingconsecutive += 1
+                # else:
+                #     pix[p[0], p[1]] = 0
 
-        if missing / howmany > 0:
-            indice = c[2] * (missing / howmany)
-        else:
-            indice = 0
-
-        if len(missinglist) > 0:
+        indice = c[2] * (missing / howmany) if missing / howmany > 0 else 0
+        if missinglist:
             minX = min(missinglist, key=operator.itemgetter(0))[0]
             maxX = max(missinglist, key=operator.itemgetter(0))[0]
 
@@ -522,26 +514,26 @@ class CircleCaptcha(OCR):
 
         curpix = pix[x, y]
         if (curpix == color and color > -1) or (curpix < self.BACKGROUND and color == -1):
-            if curpix > self.BLACKCOLOR:
-                result = 1
-            else:
-                result = -1
-
+            result = 1 if curpix > self.BLACKCOLOR else -1
         #: Verify around
         if exact is False:
             if x + 1 < im.size[0]:
                 curpix = pix[x+1, y]
-                if (curpix == color and color > -1) or (curpix < self.BACKGROUND and color == -1):
-                    if curpix > self.BLACKCOLOR:
-                        result = 1
+                if (
+                    (curpix == color and color > -1)
+                    or (curpix < self.BACKGROUND and color == -1)
+                ) and curpix > self.BLACKCOLOR:
+                    result = 1
                 if curpix <= self.BLACKCOLOR:
                     result = -1
 
             if x > 0:
                 curpix = pix[x-1, y]
-                if (curpix == color and color > -1) or (curpix < self.BACKGROUND and color == -1):
-                    if curpix > self.BLACKCOLOR:
-                        result = 1
+                if (
+                    (curpix == color and color > -1)
+                    or (curpix < self.BACKGROUND and color == -1)
+                ) and curpix > self.BLACKCOLOR:
+                    result = 1
                 if curpix <= self.BLACKCOLOR:
                     result = -1
         # self.log_debug(str((x, y)) + " = " + str(result))

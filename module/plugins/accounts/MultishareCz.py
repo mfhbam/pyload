@@ -36,7 +36,7 @@ class MultishareCz(MultiAccount):
 
         m = re.search(self.TRAFFIC_LEFT_PATTERN, html)
         trafficleft = self.parse_traffic(m.group('S'), m.group('U')) if m else 0
-        self.premium = True if trafficleft else False
+        self.premium = bool(trafficleft)
 
         html = self.load("http://www.multishare.cz/")
         mms_info = dict(re.findall(self.ACCOUNT_INFO_PATTERN, html))

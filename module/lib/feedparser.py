@@ -274,10 +274,7 @@ except NameError:
     # Python 2.1 does not have dict
     from UserDict import UserDict
     def dict(aList):
-        rc = {}
-        for k, v in aList:
-            rc[k] = v
-        return rc
+        return {k: v for k, v in aList}
 
 class FeedParserDict(UserDict):
     keymap = {'channel': 'feed',
@@ -684,10 +681,7 @@ class _FeedParserMixin:
         if ref in ('34', '38', '39', '60', '62', 'x22', 'x26', 'x27', 'x3c', 'x3e'):
             text = '&#%s;' % ref
         else:
-            if ref[0] == 'x':
-                c = int(ref[1:], 16)
-            else:
-                c = int(ref)
+            c = int(ref[1:], 16) if ref[0] == 'x' else int(ref)
             text = unichr(c).encode('utf-8')
         self.elementstack[-1][2].append(text)
 
@@ -788,7 +782,7 @@ class _FeedParserMixin:
     def pop(self, element, stripWhitespace=1):
         if not self.elementstack: return
         if self.elementstack[-1][0] != element: return
-        
+
         element, expectingText, pieces = self.elementstack.pop()
 
         if self.version == 'atom10' and self.contentparams.get('type','text') == 'application/xhtml+xml':
@@ -833,11 +827,11 @@ class _FeedParserMixin:
                 # In Python 3, base64 takes and outputs bytes, not str
                 # This may not be the most correct way to accomplish this
                 output = _base64decode(output.encode('utf-8')).decode('utf-8')
-                
+
         # resolve relative URIs
         if (element in self.can_be_relative_uri) and output:
             output = self.resolveURI(output)
-        
+
         # decode entities within embedded markup
         if not self.contentparams.get('base64', 0):
             output = self.decodeEntities(element, output)
@@ -857,10 +851,13 @@ class _FeedParserMixin:
 
         is_htmlish = self.mapContentType(self.contentparams.get('type', 'text/html')) in self.html_types
         # resolve relative URIs within embedded markup
-        if is_htmlish and RESOLVE_RELATIVE_URIS:
-            if element in self.can_contain_relative_uris:
-                output = _resolveRelativeURIs(output, self.baseuri, self.encoding, self.contentparams.get('type', 'text/html'))
-                
+        if (
+            is_htmlish
+            and RESOLVE_RELATIVE_URIS
+            and element in self.can_contain_relative_uris
+        ):
+            output = _resolveRelativeURIs(output, self.baseuri, self.encoding, self.contentparams.get('type', 'text/html'))
+
         # parse microformats
         # (must do this before sanitizing because some microformats
         # rely on elements that we sanitize)
@@ -876,11 +873,14 @@ class _FeedParserMixin:
                 vcard = mfresults.get('vcard')
                 if vcard:
                     self._getContext()['vcard'] = vcard
-        
+
         # sanitize embedded markup
-        if is_htmlish and SANITIZE_HTML:
-            if element in self.can_contain_dangerous_markup:
-                output = _sanitizeHTML(output, self.encoding, self.contentparams.get('type', 'text/html'))
+        if (
+            is_htmlish
+            and SANITIZE_HTML
+            and element in self.can_contain_dangerous_markup
+        ):
+            output = _sanitizeHTML(output, self.encoding, self.contentparams.get('type', 'text/html'))
 
         if self.encoding and type(output) != type(u''):
             try:
@@ -906,7 +906,7 @@ class _FeedParserMixin:
 
         if element == 'title' and self.hasTitle:
             return output
-        
+
         # store output in appropriate place(s)
         if self.inentry and not self.insource:
             if element == 'content':
@@ -1030,15 +1030,15 @@ class _FeedParserMixin:
             context.setdefault(key, value)
 
     def _start_rss(self, attrsD):
-        versionmap = {'0.91': 'rss091u',
-                      '0.92': 'rss092',
-                      '0.93': 'rss093',
-                      '0.94': 'rss094'}
         #If we're here then this is an RSS feed.
         #If we don't have a version or have a version that starts with something
         #other than RSS then there's been a mistake. Correct it.
         if not self.version or not self.version.startswith('rss'):
             attr_version = attrsD.get('version', '')
+            versionmap = {'0.91': 'rss091u',
+                          '0.92': 'rss092',
+                          '0.93': 'rss093',
+                          '0.94': 'rss094'}
             version = versionmap.get(attr_version)
             if version:
                 self.version = version
@@ -1067,16 +1067,13 @@ class _FeedParserMixin:
     
     def _start_feed(self, attrsD):
         self.infeed = 1
-        versionmap = {'0.1': 'atom01',
-                      '0.2': 'atom02',
-                      '0.3': 'atom03'}
         if not self.version:
             attr_version = attrsD.get('version')
+            versionmap = {'0.1': 'atom01',
+                          '0.2': 'atom02',
+                          '0.3': 'atom03'}
             version = versionmap.get(attr_version)
-            if version:
-                self.version = version
-            else:
-                self.version = 'atom'
+            self.version = version or 'atom'
 
     def _end_channel(self):
         self.infeed = 0
@@ -1232,16 +1229,15 @@ class _FeedParserMixin:
 
     def _getContext(self):
         if self.insource:
-            context = self.sourcedata
+            return self.sourcedata
         elif self.inimage and self.feeddata.has_key('image'):
-            context = self.feeddata['image']
+            return self.feeddata['image']
         elif self.intextinput:
-            context = self.feeddata['textinput']
+            return self.feeddata['textinput']
         elif self.inentry:
-            context = self.entries[-1]
+            return self.entries[-1]
         else:
-            context = self.feeddata
-        return context
+            return self.feeddata
 
     def _save_author(self, key, value, prefix='author'):
         context = self._getContext()
@@ -1644,8 +1640,8 @@ class _FeedParserMixin:
 
     def _end_content(self):
         copyToSummary = self.mapContentType(self.contentparams.get('type')) in (['text/plain'] + self.html_types)
-        value = self.popContent('content')
         if copyToSummary:
+            value = self.popContent('content')
             self._save('summary', value)
 
     _end_body = _end_content
@@ -1685,9 +1681,12 @@ class _FeedParserMixin:
     def _end_media_thumbnail(self):
         url = self.pop('url')
         context = self._getContext()
-        if url is not None and len(url.strip()) != 0:
-            if not context['media_thumbnail'][-1].has_key('url'):
-                context['media_thumbnail'][-1]['url'] = url
+        if (
+            url is not None
+            and len(url.strip()) != 0
+            and not context['media_thumbnail'][-1].has_key('url')
+        ):
+            context['media_thumbnail'][-1]['url'] = url
 
     def _start_media_player(self, attrsD):
         self.push('media_player', 0)
@@ -1829,9 +1828,12 @@ class _BaseHTMLProcessor(sgmllib.SGMLParser):
 
     def parse_starttag(self,i):
         j=sgmllib.SGMLParser.parse_starttag(self, i)
-        if self._type == 'application/xhtml+xml':
-            if j>2 and self.rawdata[j-2:j]=='/>':
-                self.unknown_endtag(self.lasttag)
+        if (
+            self._type == 'application/xhtml+xml'
+            and j > 2
+            and self.rawdata[j - 2 : j] == '/>'
+        ):
+            self.unknown_endtag(self.lasttag)
         return j
 
     def feed(self, data):
@@ -1901,11 +1903,7 @@ class _BaseHTMLProcessor(sgmllib.SGMLParser):
     def handle_charref(self, ref):
         # called for each character reference, e.g. for '&#160;', ref will be '160'
         # Reconstruct the original character reference.
-        if ref.startswith('x'):
-            value = unichr(int(ref[1:],16))
-        else:
-            value = unichr(int(ref))
-
+        value = unichr(int(ref[1:],16)) if ref.startswith('x') else unichr(int(ref))
         if value in _cp1252.keys():
             self.pieces.append('&#%s;' % hex(ord(_cp1252[value]))[1:])
         else:
@@ -2082,10 +2080,7 @@ class _MicroformatsParser:
             for node in snapFilter:
                 if node.findParent(all, propertyMatch):
                     arFilter.append(node)
-        arResults = []
-        for node in snapResults:
-            if node not in arFilter:
-                arResults.append(node)
+        arResults = [node for node in snapResults if node not in arFilter]
         bFound = (len(arResults) != 0)
         if not bFound:
             if bAllowMultiple: return []
@@ -2098,11 +2093,10 @@ class _MicroformatsParser:
         for elmResult in arResults:
             sValue = None
             if iPropertyType == self.NODE:
-                if bAllowMultiple:
-                    arValues.append(elmResult)
-                    continue
-                else:
+                if not bAllowMultiple:
                     return elmResult
+                arValues.append(elmResult)
+                continue
             sNodeName = elmResult.name.lower()
             if (iPropertyType == self.EMAIL) and (sNodeName == 'a'):
                 sValue = (elmResult.get('href') or '').split('mailto:').pop().split('?')[0]
@@ -2398,10 +2392,7 @@ class _MicroformatsParser:
         all = lambda x: 1
         for elm in self.document(all, {'rel': re.compile('.+'), 'href': re.compile('.+')}):
             rels = elm.get('rel', '').split()
-            xfn_rels = []
-            for rel in rels:
-                if rel in self.known_xfn_relationships:
-                    xfn_rels.append(rel)
+            xfn_rels = [rel for rel in rels if rel in self.known_xfn_relationships]
             if xfn_rels:
                 self.xfn.append({"relationships": xfn_rels, "href": elm.get('href', ''), "name": elm.string})
 
@@ -2673,11 +2664,11 @@ class _HTMLSanitizer(_BaseHTMLProcessor):
         _BaseHTMLProcessor.unknown_starttag(self, tag, clean_attrs)
         
     def unknown_endtag(self, tag):
-        if not tag in self.acceptable_elements:
+        if tag not in self.acceptable_elements:
             if tag in self.unacceptable_elements_with_end_tag:
                 self.unacceptablestack -= 1
             if self.mathmlOK and tag in self.mathml_elements:
-                if tag == 'math' and self.mathmlOK: self.mathmlOK -= 1
+                if tag == 'math': self.mathmlOK -= 1
             elif self.svgOK and tag in self.svg_elements:
                 tag = self.svg_elem_map.get(tag,tag)
                 if tag == 'svg' and self.svgOK: self.svgOK -= 1
@@ -2706,18 +2697,20 @@ class _HTMLSanitizer(_BaseHTMLProcessor):
 
         clean = []
         for prop,value in re.findall("([-\w]+)\s*:\s*([^:;]*)",style):
-          if not value: continue
-          if prop.lower() in self.acceptable_css_properties:
-              clean.append(prop + ': ' + value + ';')
-          elif prop.split('-')[0].lower() in ['background','border','margin','padding']:
-              for keyword in value.split():
-                  if not keyword in self.acceptable_css_keywords and \
-                      not self.valid_css_values.match(keyword):
-                      break
-              else:
-                  clean.append(prop + ': ' + value + ';')
-          elif self.svgOK and prop.lower() in self.acceptable_svg_properties:
-              clean.append(prop + ': ' + value + ';')
+            if not value: continue
+            if prop.lower() in self.acceptable_css_properties:
+                clean.append(prop + ': ' + value + ';')
+            elif prop.split('-')[0].lower() in ['background','border','margin','padding']:
+                for keyword in value.split():
+                    if (
+                        keyword not in self.acceptable_css_keywords
+                        and not self.valid_css_values.match(keyword)
+                    ):
+                        break
+                else:
+                    clean.append(prop + ': ' + value + ';')
+            elif self.svgOK and prop.lower() in self.acceptable_svg_properties:
+                clean.append(prop + ': ' + value + ';')
 
         return ' '.join(clean)
 
@@ -2764,7 +2757,7 @@ def _sanitizeHTML(htmlSource, encoding, _type):
 
 class _FeedURLHandler(urllib2.HTTPDigestAuthHandler, urllib2.HTTPRedirectHandler, urllib2.HTTPDefaultErrorHandler):
     def http_error_default(self, req, fp, code, msg, headers):
-        if ((code / 100) == 3) and (code != 304):
+        if code == 300 and code != 304:
             return self.http_error_302(req, fp, code, msg, headers)
         infourl = urllib.addinfourl(fp, headers, req.get_full_url())
         infourl.status = code
@@ -3251,10 +3244,7 @@ def _parse_date_w3dtf(dateString):
         else:
             month = int(month)
             day = m.group('day')
-            if day:
-                day = int(day)
-            else:
-                day = 1
+            day = int(day) if day else 1
         return year, month, day
 
     def __extract_time(m):
@@ -3266,10 +3256,7 @@ def _parse_date_w3dtf(dateString):
         hours = int(hours)
         minutes = int(m.group('minutes'))
         seconds = m.group('seconds')
-        if seconds:
-            seconds = int(seconds)
-        else:
-            seconds = 0
+        seconds = int(seconds) if seconds else 0
         return hours, minutes, seconds
 
     def __extract_tzd(m):
@@ -3283,10 +3270,7 @@ def _parse_date_w3dtf(dateString):
             return 0
         hours = int(m.group('tzdhours'))
         minutes = m.group('tzdminutes')
-        if minutes:
-            minutes = int(minutes)
-        else:
-            minutes = 0
+        minutes = int(minutes) if minutes else 0
         offset = (hours*60 + minutes) * 60
         if tzd[0] == '+':
             return -offset
@@ -3571,18 +3555,14 @@ def _stripDoctype(data):
     start = re.search(_s2bytes('<\w'), data)
     start = start and start.start() or -1
     head,data = data[:start+1], data[start+1:]
-    
+
     entity_pattern = re.compile(_s2bytes(r'^\s*<!ENTITY([^>]*?)>'), re.MULTILINE)
     entity_results=entity_pattern.findall(head)
     head = entity_pattern.sub(_s2bytes(''), head)
     doctype_pattern = re.compile(_s2bytes(r'^\s*<!DOCTYPE([^>]*?)>'), re.MULTILINE)
     doctype_results = doctype_pattern.findall(head)
     doctype = doctype_results and doctype_results[0] or _s2bytes('')
-    if doctype.lower().count(_s2bytes('netscape')):
-        version = 'rss091n'
-    else:
-        version = None
-
+    version = 'rss091n' if doctype.lower().count(_s2bytes('netscape')) else None
     # only allow in 'safe' inline entity definitions
     replacement=_s2bytes('')
     if len(doctype_results)==1 and entity_results:
@@ -3821,10 +3801,8 @@ class TextSerializer(Serializer):
                 if node.has_key(k + '_parsed'): continue
                 self._writer(stream, node[k], prefix + k + '.')
         elif type(node) == types.ListType:
-            index = 0
-            for n in node:
+            for index, n in enumerate(node):
                 self._writer(stream, n, prefix[:-1] + '[' + str(index) + '].')
-                index += 1
         else:
             try:
                 s = str(node).encode('utf-8')

@@ -62,11 +62,7 @@ class ThriftClientProtocol(basic.Int32StringReceiver):
     def __init__(self, client_class, iprot_factory, oprot_factory=None):
         self._client_class = client_class
         self._iprot_factory = iprot_factory
-        if oprot_factory is None:
-            self._oprot_factory = iprot_factory
-        else:
-            self._oprot_factory = oprot_factory
-
+        self._oprot_factory = iprot_factory if oprot_factory is None else oprot_factory
         self.recv_map = {}
         self.started = defer.Deferred()
 
@@ -154,10 +150,7 @@ class ThriftServerFactory(ServerFactory):
     def __init__(self, processor, iprot_factory, oprot_factory=None):
         self.processor = processor
         self.iprot_factory = iprot_factory
-        if oprot_factory is None:
-            self.oprot_factory = iprot_factory
-        else:
-            self.oprot_factory = oprot_factory
+        self.oprot_factory = iprot_factory if oprot_factory is None else oprot_factory
 
 
 class ThriftClientFactory(ClientFactory):
@@ -169,10 +162,7 @@ class ThriftClientFactory(ClientFactory):
     def __init__(self, client_class, iprot_factory, oprot_factory=None):
         self.client_class = client_class
         self.iprot_factory = iprot_factory
-        if oprot_factory is None:
-            self.oprot_factory = iprot_factory
-        else:
-            self.oprot_factory = oprot_factory
+        self.oprot_factory = iprot_factory if oprot_factory is None else oprot_factory
 
     def buildProtocol(self, addr):
         p = self.protocol(self.client_class, self.iprot_factory,

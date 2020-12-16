@@ -317,7 +317,7 @@ class Router(object):
                 offset = match.end()
                 continue
             if prefix: yield prefix, None, None
-            name, filtr, conf = g[1:4] if not g[2] is None else g[4:7]
+            name, filtr, conf = g[1:4] if g[2] is not None else g[4:7]
             if not filtr: filtr = self.default_filter
             yield name, filtr, conf or None
             offset, prefix = match.end(), ''
@@ -508,7 +508,7 @@ class Route(object):
                     callback = plugin(callback)
             except RouteReset: # Try again with changed configuration.
                 return self._make_callback()
-            if not callback is self.callback:
+            if callback is not self.callback:
                 try_update_wrapper(callback, self.callback)
         return callback
 
@@ -1223,7 +1223,7 @@ class BaseResponse(object):
         ''' Returns a copy of self. '''
         copy = Response()
         copy.status = self.status
-        copy._headers = dict((k, v[:]) for (k, v) in self._headers.items())
+        copy._headers = {k: v[:] for (k, v) in self._headers.items()}
         return copy
 
     def __iter__(self):
@@ -1385,15 +1385,15 @@ class BaseResponse(object):
         self._cookies[name] = value
 
         for key, value in options.iteritems():
-            if key == 'max_age':
-                if isinstance(value, timedelta):
-                    value = value.seconds + value.days * 24 * 3600
             if key == 'expires':
                 if isinstance(value, (datedate, datetime)):
                     value = value.timetuple()
                 elif isinstance(value, (int, float)):
                     value = time.gmtime(value)
                 value = time.strftime("%a, %d %b %Y %H:%M:%S GMT", value)
+            elif key == 'max_age':
+                if isinstance(value, timedelta):
+                    value = value.seconds + value.days * 24 * 3600
             self._cookies[name][key.replace('_', '-')] = value
 
     def delete_cookie(self, key, **kwargs):
@@ -1463,7 +1463,7 @@ class HooksPlugin(object):
     _names = 'before_request', 'after_request', 'app_reset'
 
     def __init__(self):
-        self.hooks = dict((name, []) for name in self._names)
+        self.hooks = {name: [] for name in self._names}
         self.app = None
 
     def _empty(self):
@@ -1566,7 +1566,7 @@ class MultiDict(DictMixin):
     """
 
     def __init__(self, *a, **k):
-        self.dict = dict((k, [v]) for k, v in dict(*a, **k).iteritems())
+        self.dict = {k: [v] for k, v in dict(*a, **k).iteritems()}
     def __len__(self): return len(self.dict)
     def __iter__(self): return iter(self.dict)
     def __contains__(self, key): return key in self.dict
@@ -1814,7 +1814,7 @@ def static_file(filename, root, mimetype='auto', download=False):
     """
     root = os.path.abspath(root) + os.sep
     filename = os.path.abspath(os.path.join(root, filename.strip('/\\')))
-    header = dict()
+    header = {}
 
     if not filename.startswith(root):
         return HTTPError(403, "Access denied.")
@@ -2184,8 +2184,7 @@ class GeventServer(ServerAdapter):
     """
     def run(self, handler):
         from gevent import wsgi as wsgi_fast, pywsgi, monkey, local
-        if self.options.get('monkey', True):
-            if not threading.local is local.local: monkey.patch_all()
+        if self.options.get('monkey', True) and threading.local is not local.local: monkey.patch_all()
         wsgi = wsgi_fast if self.options.get('fast') else pywsgi
         wsgi.WSGIServer((self.host, self.port), handler).serve_forever()
 
@@ -2404,7 +2403,7 @@ class FileCheckerThread(threading.Thread):
     def run(self):
         exists = os.path.exists
         mtime = lambda path: os.stat(path).st_mtime
-        files = dict()
+        files = {}
 
         for module in sys.modules.values():
             path = getattr(module, '__file__', '')
@@ -2493,11 +2492,11 @@ class BaseTemplate(object):
     @classmethod
     def global_config(cls, key, *args):
         ''' This reads or sets the global settings stored in class.settings. '''
-        if args:
-            cls.settings = cls.settings.copy() # Make settings local to class
-            cls.settings[key] = args[0]
-        else:
+        if not args:
             return cls.settings[key]
+
+        cls.settings = cls.settings.copy() # Make settings local to class
+        cls.settings[key] = args[0]
 
     def prepare(self, **options):
         """ Run preparations (parsing, caching, ...).
@@ -2550,9 +2549,8 @@ class CheetahTemplate(BaseTemplate):
         for dictarg in args: kwargs.update(dictarg)
         self.context.vars.update(self.defaults)
         self.context.vars.update(kwargs)
-        out = str(self.tpl)
         self.context.vars.clear()
-        return out
+        return str(self.tpl)
 
 
 class Jinja2Template(BaseTemplate):

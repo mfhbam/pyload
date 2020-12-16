@@ -59,13 +59,12 @@ def py_encode_basestring_ascii(s):
             if n < 0x10000:
                 #return '\\u{0:04x}'.format(n)
                 return '\\u%04x' % (n,)
-            else:
-                # surrogate pair
-                n -= 0x10000
-                s1 = 0xd800 | ((n >> 10) & 0x3ff)
-                s2 = 0xdc00 | (n & 0x3ff)
-                #return '\\u{0:04x}\\u{1:04x}'.format(s1, s2)
-                return '\\u%04x\\u%04x' % (s1, s2)
+            # surrogate pair
+            n -= 0x10000
+            s1 = 0xd800 | ((n >> 10) & 0x3ff)
+            s2 = 0xdc00 | (n & 0x3ff)
+            #return '\\u{0:04x}\\u{1:04x}'.format(s1, s2)
+            return '\\u%04x\\u%04x' % (s1, s2)
     return '"' + str(ESCAPE_ASCII.sub(replace, s)) + '"'
 
 
@@ -213,8 +212,7 @@ class JSONEncoder(object):
         if isinstance(o, basestring):
             if isinstance(o, str):
                 _encoding = self.encoding
-                if (_encoding is not None
-                        and not (_encoding == 'utf-8')):
+                if _encoding is not None and _encoding != 'utf-8':
                     o = o.decode(_encoding)
             if self.ensure_ascii:
                 return encode_basestring_ascii(o)
@@ -226,10 +224,7 @@ class JSONEncoder(object):
         chunks = self.iterencode(o, _one_shot=True)
         if not isinstance(chunks, (list, tuple)):
             chunks = list(chunks)
-        if self.ensure_ascii:
-            return ''.join(chunks)
-        else:
-            return u''.join(chunks)
+        return ''.join(chunks)
 
     def iterencode(self, o, _one_shot=False):
         """Encode the given object and yield each string
@@ -311,10 +306,7 @@ class JSONEncoderForHTML(JSONEncoder):
         # Override JSONEncoder.encode because it has hacks for
         # performance that make things more complicated.
         chunks = self.iterencode(o, True)
-        if self.ensure_ascii:
-            return ''.join(chunks)
-        else:
-            return u''.join(chunks)
+        return ''.join(chunks)
 
     def iterencode(self, o, _one_shot=False):
         chunks = super(JSONEncoderForHTML, self).iterencode(o, _one_shot)
@@ -397,8 +389,7 @@ def _make_iterencode(markers, _default, _encoder, _indent, _floatstr,
                     chunks = _iterencode_dict(value, _current_indent_level)
                 else:
                     chunks = _iterencode(value, _current_indent_level)
-                for chunk in chunks:
-                    yield chunk
+                yield from chunks
         if newline_indent is not None:
             _current_indent_level -= 1
             yield '\n' + (_indent * _current_indent_level)
@@ -482,8 +473,7 @@ def _make_iterencode(markers, _default, _encoder, _indent, _floatstr,
                     chunks = _iterencode_dict(value, _current_indent_level)
                 else:
                     chunks = _iterencode(value, _current_indent_level)
-                for chunk in chunks:
-                    yield chunk
+                yield from chunks
         if newline_indent is not None:
             _current_indent_level -= 1
             yield '\n' + (_indent * _current_indent_level)
@@ -505,18 +495,14 @@ def _make_iterencode(markers, _default, _encoder, _indent, _floatstr,
         elif isinstance(o, float):
             yield _floatstr(o)
         elif isinstance(o, list):
-            for chunk in _iterencode_list(o, _current_indent_level):
-                yield chunk
+            yield from _iterencode_list(o, _current_indent_level)
         elif (_namedtuple_as_object and isinstance(o, tuple) and
                 hasattr(o, '_asdict')):
-            for chunk in _iterencode_dict(o._asdict(), _current_indent_level):
-                yield chunk
+            yield from _iterencode_dict(o._asdict(), _current_indent_level)
         elif (_tuple_as_array and isinstance(o, tuple)):
-            for chunk in _iterencode_list(o, _current_indent_level):
-                yield chunk
+            yield from _iterencode_list(o, _current_indent_level)
         elif isinstance(o, dict):
-            for chunk in _iterencode_dict(o, _current_indent_level):
-                yield chunk
+            yield from _iterencode_dict(o, _current_indent_level)
         elif _use_decimal and isinstance(o, Decimal):
             yield str(o)
         else:
@@ -526,8 +512,7 @@ def _make_iterencode(markers, _default, _encoder, _indent, _floatstr,
                     raise ValueError("Circular reference detected")
                 markers[markerid] = o
             o = _default(o)
-            for chunk in _iterencode(o, _current_indent_level):
-                yield chunk
+            yield from _iterencode(o, _current_indent_level)
             if markers is not None:
                 del markers[markerid]
 

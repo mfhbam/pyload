@@ -319,27 +319,19 @@ class main(QObject):
         connections = self.parser.parseNode(connectionsNode)
         ret = []
         for conn in connections:
-            data = {}
-            data["type"] = conn.attribute("type", "remote")
+            data = {"type": conn.attribute("type", "remote")}
             data["default"] = conn.attribute("default", "False")
             data["id"] = conn.attribute("id", uuid().hex)
-            if data["default"] == "True":
-                data["default"] = True
-            else:
-                data["default"] = False
+            data["default"] = data["default"] == "True"
             subs = self.parser.parseNode(conn, "dict")
-            if not subs.has_key("name"):
-                data["name"] = _("Unnamed")
-            else:
-                data["name"] = subs["name"].text()
+            data["name"] = subs["name"].text() if subs.has_key("name") else _("Unnamed")
             if data["type"] == "remote":
                 if not subs.has_key("server"):
                     continue
-                else:
-                    data["host"] = subs["server"].text()
-                    data["user"] = subs["server"].attribute("user", "admin")
-                    data["port"] = int(subs["server"].attribute("port", "7227"))
-                    data["password"] = subs["server"].attribute("password", "")
+                data["host"] = subs["server"].text()
+                data["user"] = subs["server"].attribute("user", "admin")
+                data["port"] = int(subs["server"].attribute("port", "7227"))
+                data["password"] = subs["server"].attribute("password", "")
             ret.append(data)
         return ret
 
@@ -584,23 +576,25 @@ class main(QObject):
         """
             called if clipboard changes
         """
-        if self.checkClipboard:
-            text = self.clipboard.text()
-            pattern = re.compile(r"(http|https|ftp)://[a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,5}(([0-9]{1,5})?/.*)?")
-            matches = pattern.finditer(text)
-            
-            # thanks to: jmansour //#139
-            links = [str(match.group(0)) for match in matches]
-            if len(links) == 0:
-                return
-                
-            filenames = [link.rpartition("/")[2] for link in links]
-            
-            packagename = commonprefix(filenames)
-            if len(packagename) == 0:
-                packagename = filenames[0]
+        if not self.checkClipboard:
+            return
 
-            self.slotAddPackage(packagename, links)
+        text = self.clipboard.text()
+        pattern = re.compile(r"(http|https|ftp)://[a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,5}(([0-9]{1,5})?/.*)?")
+        matches = pattern.finditer(text)
+
+        # thanks to: jmansour //#139
+        links = [str(match.group(0)) for match in matches]
+        if not links:
+            return
+
+        filenames = [link.rpartition("/")[2] for link in links]
+
+        packagename = commonprefix(filenames)
+        if len(packagename) == 0:
+            packagename = filenames[0]
+
+        self.slotAddPackage(packagename, links)
 
     def slotSetClipboardStatus(self, status):
         """
@@ -629,7 +623,7 @@ class main(QObject):
             self.mainWindow.captchaDock.emit(SIGNAL("setTask"), t.tid, b64decode(t.data), t.type)
         elif not self.mainWindow.captchaDock.isFree():
             status = self.connector.getCaptchaTaskStatus(self.mainWindow.captchaDock.currentID)
-            if not (status == "user" or status == "shared-user"):
+            if not status in ["user", "shared-user"]:
                 self.mainWindow.captchaDock.hide()
                 self.mainWindow.captchaDock.processing = False
                 self.mainWindow.captchaDock.currentID = None
@@ -674,7 +668,7 @@ class main(QObject):
     def quitInternal(self):
         if self.core:
             self.core.api.kill()
-            for i in range(10):
+            for _ in range(10):
                 if self.core.shuttedDown:
                     break
                 sleep(0.5)
@@ -732,9 +726,8 @@ class TrayIcon(QSystemTrayIcon):
         self.showAction.setChecked(False)
 
     def clicked(self, reason):
-        if self.showAction.isEnabled():
-            if reason == QSystemTrayIcon.Trigger:
-                self.showAction.toggle()
+        if self.showAction.isEnabled() and reason == QSystemTrayIcon.Trigger:
+            self.showAction.toggle()
 
 class Notification(QObject):
     def __init__(self, tray):

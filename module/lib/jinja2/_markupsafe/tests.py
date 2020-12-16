@@ -55,8 +55,8 @@ class MarkupLeakTestCase(unittest.TestCase):
 
     def test_markup_leaks(self):
         counts = set()
-        for count in xrange(20):
-            for item in xrange(1000):
+        for _ in xrange(20):
+            for _ in xrange(1000):
                 escape("foo")
                 escape("<foo>")
                 escape(u"foo")

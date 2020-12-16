@@ -114,10 +114,10 @@ class SettingsWidget(QWidget):
 
                         if item.type == "int":
                             i.setValue(int(item.value))
-                        elif not item.type.find(";") == -1:
+                        elif item.type.find(";") != -1:
                             i.setCurrentIndex(i.findText(item.value))
                         elif item.type == "bool":
-                            if True if item.value.lower() in ("1","true", "on", "an","yes") else False:
+                            if item.value.lower() in ("1","true", "on", "an","yes"):
                                 i.setCurrentIndex(0)
                             else:
                                 i.setCurrentIndex(1)
@@ -146,11 +146,14 @@ class SettingsWidget(QWidget):
                         if item.type == "int":
                             if i.value() != int(item.value):
                                 self.connector.setConfigValue(k, option, i.value(), sec)
-                        elif not item.type.find(";") == -1:
+                        elif item.type.find(";") != -1:
                             if i.currentText() != item.value:
                                 self.connector.setConfigValue(k, option, i.currentText(), sec)
                         elif item.type == "bool":
-                            if (True if item.value.lower() in ("1","true", "on", "an","yes") else False) ^ (not i.currentIndex()):
+                            if (
+                                item.value.lower()
+                                in ("1", "true", "on", "an", "yes")
+                            ) ^ (not i.currentIndex()):
                                 self.connector.setConfigValue(k, option, not i.currentIndex(), sec)
                         else:
                             if i.text() != item.value:
@@ -165,24 +168,24 @@ class Section(QGroupBox):
         self.ctype = ctype
         layout = QFormLayout(self)
         self.setLayout(layout)
-        
+
         sw = QWidget()
         sw.setLayout(QVBoxLayout())
         sw.layout().addWidget(self)
-        
+
         sa = QScrollArea()
         sa.setWidgetResizable(True)
         sa.setWidget(sw)
         sa.setFrameShape(sa.NoFrame)
-        
+
         parent.addTab(sa, data.description)
-        
+
         for option in self.data.items:
             if option.type == "int":
                 i = QSpinBox(self)
                 i.setMaximum(999999)
                 i.setValue(int(option.value))
-            elif not option.type.find(";") == -1:
+            elif option.type.find(";") != -1:
                 choices = option.type.split(";")
                 i = QComboBox(self)
                 i.addItems(choices)
@@ -191,7 +194,7 @@ class Section(QGroupBox):
                 i = QComboBox(self)
                 i.addItem(_("Yes"), QVariant(True))
                 i.addItem(_("No"), QVariant(False))
-                if True if option.value.lower() in ("1","true", "on", "an","yes") else False:
+                if option.value.lower() in ("1","true", "on", "an","yes"):
                     i.setCurrentIndex(0)
                 else:
                     i.setCurrentIndex(1)

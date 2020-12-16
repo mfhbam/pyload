@@ -20,10 +20,7 @@ def _get_opcodes(codeobj):
     while i < len(s):
         code = ord(s[i])
         opcodes.append(code)
-        if code >= dis.HAVE_ARGUMENT:
-            i += 3
-        else:
-            i += 1
+        i += 3 if code >= dis.HAVE_ARGUMENT else 1
     return opcodes, names
 
 def test_expr(expr, allowed_codes):

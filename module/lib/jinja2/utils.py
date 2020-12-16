@@ -46,7 +46,6 @@ _concat = u''.join
 try:
     def _test_gen_bug():
         raise TypeError(_test_gen_bug)
-        yield None
     _concat(_test_gen_bug())
 except TypeError, _error:
     if not _error.args or _error.args[0] is not _test_gen_bug:
@@ -174,7 +173,7 @@ def is_undefined(obj):
 
 def consume(iterable):
     """Consumes an iterable without doing anything with it."""
-    for event in iterable:
+    for _ in iterable:
         pass
 
 
@@ -292,8 +291,12 @@ def urlize(text, trim_url_limit=None, nofollow=False):
                middle.startswith('https://'):
                 middle = '<a href="%s"%s>%s</a>' % (middle,
                     nofollow_attr, trim_url(middle))
-            if '@' in middle and not middle.startswith('www.') and \
-               not ':' in middle and _simple_email_re.match(middle):
+            if (
+                '@' in middle
+                and not middle.startswith('www.')
+                and ':' not in middle
+                and _simple_email_re.match(middle)
+            ):
                 middle = '<a href="mailto:%s">%s</a>' % (middle, middle)
             if lead + middle + trail != word:
                 words[i] = lead + middle + trail
@@ -558,9 +561,8 @@ class Cycler(object):
 
     def next(self):
         """Goes one item ahead and returns it."""
-        rv = self.current
         self.pos = (self.pos + 1) % len(self.items)
-        return rv
+        return self.current
 
 
 class Joiner(object):

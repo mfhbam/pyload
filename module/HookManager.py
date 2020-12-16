@@ -106,7 +106,7 @@ class HookManager:
     def callRPC(self, plugin, func, args, parse):
         if not args: args = tuple()
         if parse:
-            args = tuple([literal_eval(x) for x in args])
+            args = tuple(literal_eval(x) for x in args)
 
         plugin = self.pluginMap[plugin]
         f = getattr(plugin, func)
@@ -147,10 +147,11 @@ class HookManager:
         self.plugins = plugins
 
     def manageHooks(self, plugin, name, value):
-        if name == "activated" and value:
-            self.activateHook(plugin)
-        elif name == "activated" and not value:
-            self.deactivateHook(plugin)
+        if name == "activated":
+            if value:
+                self.activateHook(plugin)
+            else:
+                self.deactivateHook(plugin)
 
     def activateHook(self, plugin):
 

@@ -71,14 +71,37 @@ class DlProtectCom(SimpleCrypter):
     # Sample configuration
     def conf(self):
         useragent = self.pyload.api.getConfigValue("UserAgentSwitcher", "useragent", "plugin")
-        conf = {'res': '1280x611x24',
-                'java': True,
-                'user_agent': useragent,
-                'plugins': [['Adobe Acrobat', 'nppdf32.dll', 'Adobe PDF Plug-In For Firefox and Netscape 11.0.13', '11.0.13.17'],
-                            ['Adobe Acrobat', 'nppdf32.dll', 'Adobe PDF Plug-In For Firefox and Netscape 11.0.13', '11.0.13.17'],
-                            ['Java(TM) Platform SE 8 U51', 'npjp2.dll', 'Next Generation Java Plug-in 11.51.2 for Mozilla browsers', '11.51.2.16'],
-                            ['Shockwave Flash', 'NPSWF32_19_0_0_226.dll', 'Shockwave Flash 19.0 r0', '19.0.0.226']]}
-        return conf
+        return {
+            'res': '1280x611x24',
+            'java': True,
+            'user_agent': useragent,
+            'plugins': [
+                [
+                    'Adobe Acrobat',
+                    'nppdf32.dll',
+                    'Adobe PDF Plug-In For Firefox and Netscape 11.0.13',
+                    '11.0.13.17',
+                ],
+                [
+                    'Adobe Acrobat',
+                    'nppdf32.dll',
+                    'Adobe PDF Plug-In For Firefox and Netscape 11.0.13',
+                    '11.0.13.17',
+                ],
+                [
+                    'Java(TM) Platform SE 8 U51',
+                    'npjp2.dll',
+                    'Next Generation Java Plug-in 11.51.2 for Mozilla browsers',
+                    '11.51.2.16',
+                ],
+                [
+                    'Shockwave Flash',
+                    'NPSWF32_19_0_0_226.dll',
+                    'Shockwave Flash 19.0 r0',
+                    '19.0.0.226',
+                ],
+            ],
+        }
 
     def get_links(self):
         #: Direct link with redirect

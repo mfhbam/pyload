@@ -250,10 +250,7 @@ def do_join(eval_ctx, value, d=u''):
                 do_escape = True
             else:
                 value[idx] = unicode(item)
-        if do_escape:
-            d = escape(d)
-        else:
-            d = unicode(d)
+        d = escape(d) if do_escape else unicode(d)
         return d.join(value)
 
     # no html involved, to normal joining
@@ -553,7 +550,7 @@ def do_round(value, precision=0, method='common'):
         {{ 42.55|round|int }}
             -> 43
     """
-    if not method in ('common', 'ceil', 'floor'):
+    if method not in ('common', 'ceil', 'floor'):
         raise FilterArgumentError('method must be common, ceil or floor')
     if method == 'common':
         return round(value, precision)

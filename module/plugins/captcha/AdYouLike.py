@@ -81,10 +81,8 @@ class AdYouLike(CaptchaService):
         except AttributeError:
             self.fail(_("AdYouLike result not found"))
 
-        result = {'_ayl_captcha_engine' : "adyoulike",
+        return {'_ayl_captcha_engine' : "adyoulike",
                   '_ayl_env'            : server['all']['env'],
                   '_ayl_tid'            : challenge['tid'],
                   '_ayl_token_challenge': challenge['token'],
                   '_ayl_response'       : response}
-
-        return result

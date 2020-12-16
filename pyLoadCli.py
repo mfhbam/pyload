@@ -34,11 +34,7 @@ import ConfigParser
 
 from codecs import getwriter
 
-if os.name == "nt":
-    enc = "cp850"
-else:
-    enc = "utf8"
-
+enc = "cp850" if os.name == "nt" else "utf8"
 sys.stdout = getwriter(enc)(sys.stdout, errors="replace")
 
 from module import InitHomeDir

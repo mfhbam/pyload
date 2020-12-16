@@ -182,23 +182,22 @@ class ManageFiles(Handler):
 
     def parseInput(self, inp, package=True):
         inp = inp.strip()
-        if "-" in inp:
-            l, n, h = inp.partition("-")
-            l = int(l)
-            h = int(h)
-            r = range(l, h + 1)
-
-            ret = []
-            if package:
-                for p in self.cache:
-                    if p.pid in r:
-                        ret.append(p.pid)
-            else:
-                for l in self.links.links:
-                    if l.lid in r:
-                        ret.append(l.lid)
-
-            return ret
-
-        else:
+        if "-" not in inp:
             return [int(x) for x in inp.split(",")]
+
+        l, n, h = inp.partition("-")
+        l = int(l)
+        h = int(h)
+        r = range(l, h + 1)
+
+        ret = []
+        if package:
+            for p in self.cache:
+                if p.pid in r:
+                    ret.append(p.pid)
+        else:
+            for l in self.links.links:
+                if l.lid in r:
+                    ret.append(l.lid)
+
+        return ret

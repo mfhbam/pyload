@@ -49,7 +49,7 @@ else:
 def unoptimize_before_dead_code():
     x = 42
     def f():
-        if 0: dummy(x)
+        pass
     return f
 unoptimize_before_dead_code = bool(unoptimize_before_dead_code().func_closure)
 
@@ -73,10 +73,7 @@ def has_safe_repr(value):
                           xrange, Markup)):
         return True
     if isinstance(value, (tuple, list, set, frozenset)):
-        for item in value:
-            if not has_safe_repr(item):
-                return False
-        return True
+        return all(has_safe_repr(item) for item in value)
     elif isinstance(value, dict):
         for key, value in value.iteritems():
             if not has_safe_repr(key):
@@ -207,9 +204,9 @@ class Frame(object):
         that may be defined with `add_special` which may occour scoped.
         """
         i = self.identifiers
-        return (i.declared | i.outer_undeclared) & \
-               (i.declared_locally | i.declared_parameter) | \
-               set(x for x in extra if i.is_declared(x))
+        return (i.declared | i.outer_undeclared) & (
+            i.declared_locally | i.declared_parameter
+        ) | {x for x in extra if i.is_declared(x)}
 
     def inner(self):
         """Return an inner frame."""
@@ -618,10 +615,12 @@ class CodeGenerator(NodeVisitor):
         for name in frame.find_shadowed(extra_vars):
             aliases[name] = ident = self.temporary_identifier()
             self.writeline('%s = l_%s' % (ident, name))
-        to_declare = set()
-        for name in frame.identifiers.declared_locally:
-            if name not in aliases:
-                to_declare.add('l_' + name)
+        to_declare = {
+            'l_' + name
+            for name in frame.identifiers.declared_locally
+            if name not in aliases
+        }
+
         if to_declare:
             self.writeline(' = '.join(to_declare) + ' = missing')
         return aliases
@@ -630,10 +629,12 @@ class CodeGenerator(NodeVisitor):
         """Restore all aliases and delete unused variables."""
         for name, alias in aliases.iteritems():
             self.writeline('l_%s = %s' % (name, alias))
-        to_delete = set()
-        for name in frame.identifiers.declared_locally:
-            if name not in aliases:
-                to_delete.add('l_' + name)
+        to_delete = {
+            'l_' + name
+            for name in frame.identifiers.declared_locally
+            if name not in aliases
+        }
+
         if to_delete:
             # we cannot use the del statement here because enclosed
             # scopes can trigger a SyntaxError:
@@ -1244,10 +1245,7 @@ class CodeGenerator(NodeVisitor):
             # at that point.
             try:
                 if frame.eval_ctx.autoescape:
-                    if hasattr(const, '__html__'):
-                        const = const.__html__()
-                    else:
-                        const = escape(const)
+                    const = const.__html__() if hasattr(const, '__html__') else escape(const)
                 const = finalize(const)
             except:
                 # if something goes wrong here we evaluate the node

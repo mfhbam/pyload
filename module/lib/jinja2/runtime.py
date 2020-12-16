@@ -53,10 +53,7 @@ def new_context(environment, template_name, blocks, vars=None,
     """Internal helper to for context creation."""
     if vars is None:
         vars = {}
-    if shared:
-        parent = vars
-    else:
-        parent = dict(globals or (), **vars)
+    parent = vars if shared else dict(globals or (), **vars)
     if locals:
         # if the parent is shared a copy should be created because
         # we don't want to modify the dict passed
@@ -120,7 +117,7 @@ class Context(object):
         # create the initial mapping of blocks.  Whenever template inheritance
         # takes place the runtime will update this mapping with the new blocks
         # from the template.
-        self.blocks = dict((k, [v]) for k, v in blocks.iteritems())
+        self.blocks = {k: [v] for k, v in blocks.iteritems()}
 
     def super(self, name, current):
         """Render a parent block."""
@@ -155,7 +152,7 @@ class Context(object):
 
     def get_exported(self):
         """Get a new dict with the exported variables."""
-        return dict((k, self.vars[k]) for k in self.exported_vars)
+        return {k: self.vars[k] for k in self.exported_vars}
 
     def get_all(self):
         """Return a copy of the complete context as dict including the
@@ -479,8 +476,7 @@ class Undefined(object):
         return 0
 
     def __iter__(self):
-        if 0:
-            yield None
+        pass
 
     def __nonzero__(self):
         return False

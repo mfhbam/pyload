@@ -360,20 +360,6 @@ class CacheManager(object):
         
         """
         return region_invalidate(namespace, region, *args)
-        if callable(namespace):
-            if not region:
-                region = namespace._arg_region
-            namespace = namespace._arg_namespace
-
-        if not region:
-            raise BeakerException("Region or callable function "
-                                    "namespace is required")
-        else:
-            region = self.regions[region]
-        
-        cache = self.get_cache(namespace, **region)
-        cache_key = " ".join(str(x) for x in args)
-        cache.remove_value(cache_key)
 
     def cache(self, *args, **kwargs):
         """Decorate a function to cache itself with supplied parameters

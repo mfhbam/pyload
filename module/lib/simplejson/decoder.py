@@ -57,10 +57,7 @@ class JSONDecodeError(ValueError):
 
 def linecol(doc, pos):
     lineno = doc.count('\n', 0, pos) + 1
-    if lineno == 1:
-        colno = pos
-    else:
-        colno = pos - doc.rindex('\n', 0, pos)
+    colno = pos if lineno == 1 else pos - doc.rindex('\n', 0, pos)
     return lineno, colno
 
 
@@ -156,7 +153,7 @@ def py_scanstring(s, end, encoding=None, strict=True,
             # Check for surrogate pair on UCS-4 systems
             if 0xd800 <= uni <= 0xdbff and sys.maxunicode > 65535:
                 msg = "Invalid \\uXXXX\\uXXXX surrogate pair"
-                if not s[end + 5:end + 7] == '\\u':
+                if s[end + 5 : end + 7] != '\\u':
                     raise JSONDecodeError(msg, s, end)
                 esc2 = s[end + 7:end + 11]
                 if len(esc2) != 4:

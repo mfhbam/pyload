@@ -262,12 +262,14 @@ class FileHandler:
 
         data = self.db.getPackageData(id)
 
-        tmplist = []
-
         cache = self.cache.values()
-        for x in cache:
-            if int(x.toDbDict()[x.id]["package"]) == int(id):
-                tmplist.append((x.id, x.toDbDict()[x.id]))
+        tmplist = [
+            (x.id, x.toDbDict()[x.id])
+            for x in cache
+            if int(x.toDbDict()[x.id]["package"]) == int(id)
+        ]
+
+
         data.update(tmplist)
 
         pack["links"] = data
@@ -346,9 +348,8 @@ class FileHandler:
         jobs = self.db.getPluginJob(plugins)
         if jobs:
             return self.getFile(jobs[0])
-        else:
-            self.jobCache["decrypt"] = "empty"
-            return None
+        self.jobCache["decrypt"] = "empty"
+        return None
 
     def getFileCount(self):
         """returns number of files"""
@@ -526,22 +527,24 @@ class FileHandler:
         """ checks if package is finished and calls hookmanager """
 
         ids = self.db.getUnfinished(pyfile.packageid)
-        if not ids or (pyfile.id in ids and len(ids) == 1):
-            if not pyfile.package().setFinished:
-                self.core.log.info(_("Package finished: %s") % pyfile.package().name)
-                self.core.hookManager.packageFinished(pyfile.package())
-                pyfile.package().setFinished = True
+        if (
+            not ids or (pyfile.id in ids and len(ids) == 1)
+        ) and not pyfile.package().setFinished:
+            self.core.log.info(_("Package finished: %s") % pyfile.package().name)
+            self.core.hookManager.packageFinished(pyfile.package())
+            pyfile.package().setFinished = True
 
 
     def reCheckPackage(self, pid):
         """ recheck links in package """
         data = self.db.getPackageData(pid)
 
-        urls = []
+        urls = [
+            (pyfile["url"], pyfile["plugin"])
+            for pyfile in data.itervalues()
+            if pyfile["status"] not in (0, 12, 13)
+        ]
 
-        for pyfile in data.itervalues():
-            if pyfile["status"] not in  (0, 12, 13):
-                urls.append((pyfile["url"], pyfile["plugin"]))
 
         self.core.threadManager.createInfoThread(urls, pid)
 
@@ -659,9 +662,7 @@ class FileMethods():
 
         """
         self.c.execute('SELECT l.id,l.url,l.name,l.size,l.status,l.error,l.plugin,l.package,l.linkorder FROM links as l INNER JOIN packages as p ON l.package=p.id WHERE p.queue=? ORDER BY l.linkorder', (q,))
-        data = {}
-        for r in self.c:
-            data[r[0]] = {
+        return {r[0]: {
                 'id': r[0],
                 'url': r[1],
                 'name': r[2],
@@ -673,9 +674,7 @@ class FileMethods():
                 'plugin': r[6],
                 'package': r[7],
                 'order': r[8],
-            }
-
-        return data
+            } for r in self.c}
 
     @style.queue
     def getAllPackages(self, q):
@@ -743,9 +742,7 @@ class FileMethods():
         """get data about links for a package"""
         self.c.execute('SELECT id,url,name,size,status,error,plugin,package,linkorder FROM links WHERE package=? ORDER BY linkorder', (str(id), ))
 
-        data = {}
-        for r in self.c:
-            data[r[0]] = {
+        return {r[0]: {
                 'id': r[0],
                 'url': r[1],
                 'name': r[2],
@@ -757,9 +754,7 @@ class FileMethods():
                 'plugin': r[6],
                 'package': r[7],
                 'order': r[8],
-            }
-
-        return data
+            } for r in self.c}
 
 
     @style.async
@@ -770,15 +765,12 @@ class FileMethods():
     def updatePackage(self, p):
         self.c.execute('UPDATE packages SET name=?,folder=?,site=?,password=?,queue=? WHERE id=?', (p.name, p.folder, p.site, p.password, p.queue, str(p.id)))
         
-    @style.queue    
+    @style.queue
     def updateLinkInfo(self, data):
         """ data is list of tupels (name, size, status, url) """
         self.c.executemany('UPDATE links SET name=?, size=?, status=? WHERE url=? AND status IN (1,2,3,14)', data)
-        ids = []
         self.c.execute('SELECT id FROM links WHERE url IN (\'%s\')' % "','".join([x[3] for x in data]))
-        for r in self.c:
-            ids.append(int(r[0]))
-        return ids
+        return [int(r[0]) for r in self.c]
         
     @style.queue
     def reorderPackage(self, p, position, noMove=False):

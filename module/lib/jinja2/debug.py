@@ -280,8 +280,11 @@ def _init_ugly_crap():
 
     def tb_set_next(tb, next):
         """Set the tb_next attribute of a traceback object."""
-        if not (isinstance(tb, TracebackType) and
-                (next is None or isinstance(next, TracebackType))):
+        if (
+            not isinstance(tb, TracebackType)
+            or next is not None
+            and not isinstance(next, TracebackType)
+        ):
             raise TypeError('tb_set_next arguments must be traceback objects')
         obj = _Traceback.from_address(id(tb))
         if tb.tb_next is not None:

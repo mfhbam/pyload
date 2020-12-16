@@ -75,10 +75,10 @@ class ZeveraCom(MultiAccount):
 
         self.log_debug(res)
 
-        if ':' in res:
-            if not just_header:
-                res = res.replace(',', '\n')
-            return dict((y.strip().lower(), z.strip()) for (y, z) in
-                        [x.split(':', 1) for x in res.splitlines() if ':' in x])
-        else:
+        if ':' not in res:
             return res
+
+        if not just_header:
+            res = res.replace(',', '\n')
+        return {y.strip().lower(): z.strip() for (y, z) in
+                            [x.split(':', 1) for x in res.splitlines() if ':' in x]}

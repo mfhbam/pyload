@@ -54,8 +54,7 @@ class AdsCaptcha(CaptchaService):
 
 
     def result(self, server, challenge):
-        result = self.decrypt("%sChallenge.aspx" % server,
+        return self.decrypt("%sChallenge.aspx" % server,
                                     get={'cid': challenge, 'dummy': random.random()},
                                     cookies=True,
                                     input_type="jpg")
-        return result

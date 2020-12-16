@@ -71,8 +71,8 @@ class Client():
 
 class UpdateEvent():
     def __init__(self, itype, iid, destination):
-        assert itype == "pack" or itype == "file"
-        assert destination == "queue" or destination == "collector"
+        assert itype in ["pack", "file"]
+        assert destination in ["queue", "collector"]
         self.type = itype
         self.id = iid
         self.destination = destination
@@ -82,8 +82,8 @@ class UpdateEvent():
 
 class RemoveEvent():
     def __init__(self, itype, iid, destination):
-        assert itype == "pack" or itype == "file"
-        assert destination == "queue" or destination == "collector"
+        assert itype in ["pack", "file"]
+        assert destination in ["queue", "collector"]
         self.type = itype
         self.id = iid
         self.destination = destination
@@ -93,8 +93,8 @@ class RemoveEvent():
 
 class InsertEvent():
     def __init__(self, itype, iid, after, destination):
-        assert itype == "pack" or itype == "file"
-        assert destination == "queue" or destination == "collector"
+        assert itype in ["pack", "file"]
+        assert destination in ["queue", "collector"]
         self.type = itype
         self.id = iid
         self.after = after
@@ -105,7 +105,7 @@ class InsertEvent():
 
 class ReloadAllEvent():
     def __init__(self, destination):
-        assert destination == "queue" or destination == "collector"
+        assert destination in ["queue", "collector"]
         self.destination = destination
         
     def toList(self):

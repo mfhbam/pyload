@@ -105,9 +105,7 @@ class QueueModel(CollectorModel):
             ugly?: Overview connects to this signal for updating
         """
         packageCount = len(self._data)
-        fileCount = 0
-        for p in self._data:
-            fileCount += len(p.children)
+        fileCount = sum(len(p.children) for p in self._data)
         self.mutex.unlock()
         self.emit(SIGNAL("updateCount"), packageCount, fileCount)
         self.mutex.lock()
@@ -167,24 +165,27 @@ class QueueModel(CollectorModel):
             returns time to wait, caches startingtime to provide progress
         """
         locker = QMutexLocker(self.mutex)
-        if isinstance(item, Link):
-            if item.data["status"] == 5 and item.data["downloading"]:
-                until = float(item.data["downloading"]["wait_until"])
-                try:
-                    since, until_old = self.wait_dict[item.id]
-                    if not until == until_old:
-                        raise Exception
-                except:
-                    since = time()
-                    self.wait_dict[item.id] = since, until
-                since = float(since)
-                max_wait = float(until-since)
-                rest = int(until-time())
-                if rest < 0:
-                    return 0, None
-                res = 100/max_wait
-                perc = rest*res
-                return perc, rest
+        if (
+            isinstance(item, Link)
+            and item.data["status"] == 5
+            and item.data["downloading"]
+        ):
+            until = float(item.data["downloading"]["wait_until"])
+            try:
+                since, until_old = self.wait_dict[item.id]
+                if until != until_old:
+                    raise Exception
+            except:
+                since = time()
+                self.wait_dict[item.id] = since, until
+            since = float(since)
+            max_wait = float(until-since)
+            rest = int(until-time())
+            if rest < 0:
+                return 0, None
+            res = 100/max_wait
+            perc = rest*res
+            return perc, rest
         return None
     
     def getProgress(self, item, locked=True):
@@ -232,7 +233,7 @@ class QueueModel(CollectorModel):
             for child in item.children:
                 val = 0
                 if child.data["downloading"]:
-                    if not child.data["statusmsg"] == "waiting":
+                    if child.data["statusmsg"] != "waiting":
                         all_waiting = False
                     val = int(child.data["downloading"]["speed"])
                     running = True
@@ -256,7 +257,7 @@ class QueueModel(CollectorModel):
                 plugins = []
                 if isinstance(item, Package):
                     for child in item.children:
-                        if not child.data["plugin"] in plugins:
+                        if child.data["plugin"] not in plugins:
                             plugins.append(child.data["plugin"])
                 else:
                     plugins.append(item.data["plugin"])
@@ -271,7 +272,7 @@ class QueueModel(CollectorModel):
                             status = child.data["status"]
                 else:
                     status = item.data["status"]
-                
+
                 if speed is None or status == 7 or status == 10 or status == 5:
                     return QVariant(self.translateStatus(statusMapReverse[status]))
                 else:
@@ -305,15 +306,14 @@ class QueueModel(CollectorModel):
                         elif self.getProgress(c, False) == 100:
                             cs += s
                         ms += s
-                    if cs == 0 or cs == ms:
+                    if cs in [0, ms]:
                         return QVariant(formatSize(ms))
                     else:
                         return QVariant("%s / %s" % (formatSize(cs), formatSize(ms)))
             elif index.column() == 4:
                 item = index.internalPointer()
-                if isinstance(item, Link):
-                    if item.data["downloading"]:
-                        return QVariant(item.data["downloading"]["format_eta"])
+                if isinstance(item, Link) and item.data["downloading"]:
+                    return QVariant(item.data["downloading"]["format_eta"])
         elif role == Qt.EditRole:
             if index.column() == 0:
                 return QVariant(index.internalPointer().data["name"])
@@ -380,7 +380,7 @@ class QueueProgressBarDelegate(QItemDelegate):
             opts.rect.setHeight(option.rect.height()-1)
             opts.textVisible = True
             opts.textAlignment = Qt.AlignCenter
-            if not wait is None:
+            if wait is not None:
                 opts.text = QString(_("waiting %d seconds") % (wait,))
             else:
                 opts.text = QString.number(opts.progress) + "%"

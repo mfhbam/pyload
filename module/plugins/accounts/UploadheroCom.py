@@ -26,11 +26,9 @@ class UploadheroCom(Account):
         if premium_pattern.search(html):
             end_date = datetime.date.today() + datetime.timedelta(days=int(premium_pattern.search(html).group(1)))
             end_date = time.mktime(future.timetuple())
-            account_info = {'validuntil': end_date, 'trafficleft': -1, 'premium': True}
+            return {'validuntil': end_date, 'trafficleft': -1, 'premium': True}
         else:
-            account_info = {'validuntil': -1, 'trafficleft': -1, 'premium': False}
-
-        return account_info
+            return {'validuntil': -1, 'trafficleft': -1, 'premium': False}
 
 
     def signin(self, user, password, data):

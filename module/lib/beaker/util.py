@@ -146,30 +146,27 @@ class WeakValuedRegistry(SyncDict):
 sha1 = None            
 def encoded_path(root, identifiers, extension = ".enc", depth = 3,
                  digest_filenames=True):
-                 
+
     """Generate a unique file-accessible path from the given list of
     identifiers starting at the given root directory."""
     ident = "_".join(identifiers)
-    
+
     global sha1
     if sha1 is None:
         from beaker.crypto import sha1
-        
+
     if digest_filenames:
         if py3k:
             ident = sha1(ident.encode('utf-8')).hexdigest()
         else:
             ident = sha1(ident).hexdigest()
-    
+
     ident = os.path.basename(ident)
 
-    tokens = []
-    for d in range(1, depth):
-        tokens.append(ident[0:d])
-    
+    tokens = [ident[0:d] for d in range(1, depth)]
     dir = os.path.join(root, *tokens)
     verify_directory(dir)
-    
+
     return os.path.join(dir, ident + extension)
 
 

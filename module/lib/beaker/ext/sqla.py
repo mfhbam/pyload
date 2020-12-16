@@ -87,7 +87,7 @@ class SqlaNamespaceManager(OpenResourceNamespaceManager):
         self.loaded = True
 
     def do_close(self):
-        if self.flags is not None and (self.flags == 'c' or self.flags == 'w'):
+        if self.flags is not None and self.flags in ['c', 'w']:
             if self._is_new:
                 insert = self.table.insert()
                 self.bind.execute(insert, namespace=self.namespace, data=self.hash,

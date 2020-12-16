@@ -28,12 +28,9 @@ class MegaDebridEu(MultiAccount):
         json_data = json.loads(reponse)
 
         if json_data['response_code'] == "ok":
-            host_list = [element[0] for element in json_data['hosters']]
-        else:
-            self.log_error(_("Unable to retrieve hoster list"))
-            host_list = []
-
-        return host_list
+            return [element[0] for element in json_data['hosters']]
+        self.log_error(_("Unable to retrieve hoster list"))
+        return []
 
 
     def grab_info(self, user, password, data):
@@ -45,9 +42,8 @@ class MegaDebridEu(MultiAccount):
 
         if res['response_code'] == "ok":
             return {'premium': True, 'validuntil': float(res['vip_end']), 'status': True}
-        else:
-            self.log_error(res)
-            return {'status': False, 'premium': False}
+        self.log_error(res)
+        return {'status': False, 'premium': False}
 
 
     def signin(self, user, password, data):

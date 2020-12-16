@@ -26,16 +26,13 @@ class SignedCookie(Cookie.BaseCookie):
     def value_decode(self, val):
         val = val.strip('"')
         sig = HMAC.new(self.secret, val[40:], SHA1).hexdigest()
-        
-        # Avoid timing attacks
-        invalid_bits = 0
+
         input_sig = val[:40]
         if len(sig) != len(input_sig):
             return None, val
-        
-        for a, b in zip(sig, input_sig):
-            invalid_bits += a != b
-        
+
+        # Avoid timing attacks
+        invalid_bits = sum(a != b for a, b in zip(sig, input_sig))
         if invalid_bits:
             return None, val
         else:
@@ -66,25 +63,22 @@ class Session(dict):
                  cookie_domain=None, secret=None, secure=False,
                  namespace_class=None, **namespace_args):
         if not type:
-            if data_dir:
-                self.type = 'file'
-            else:
-                self.type = 'memory'
+            self.type = 'file' if data_dir else 'memory'
         else:
             self.type = type
 
         self.namespace_class = namespace_class or clsmap[self.type]
 
         self.namespace_args = namespace_args
-        
+
         self.request = request
         self.data_dir = data_dir
         self.key = key
-        
+
         self.timeout = timeout
         self.use_cookies = use_cookies
         self.cookie_expires = cookie_expires
-        
+
         # Default cookie domain/path
         self._domain = cookie_domain
         self._path = '/'
@@ -93,7 +87,7 @@ class Session(dict):
         self.secure = secure
         self.id = id
         self.accessed_dict = {}
-        
+
         if self.use_cookies:
             cookieheader = request.get('cookie', '')
             if secret:
@@ -103,10 +97,10 @@ class Session(dict):
                     self.cookie = SignedCookie(secret, input=None)
             else:
                 self.cookie = Cookie.SimpleCookie(input=cookieheader)
-            
+
             if not self.id and self.key in self.cookie:
                 self.id = self.cookie[self.key].value
-        
+
         self.is_new = self.id is None
         if self.is_new:
             self._create_id()
@@ -441,10 +435,10 @@ class CookieSession(Session):
                                              self.validate_key + nonce, 1)
             payload = b64decode(self.cookie[self.key].value[8:])
             data = crypto.aesDecrypt(payload, encrypt_key)
-            return pickle.loads(data)
         else:
             data = b64decode(self.cookie[self.key].value)
-            return pickle.loads(data)
+
+        return pickle.loads(data)
     
     def _make_id(self):
         return md5(md5(
