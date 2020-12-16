@@ -23,7 +23,7 @@ class YibaishiwuCom(Account):
         html = self.load("http://115.com/")
 
         m = re.search(self.ACCOUNT_INFO_PATTERN, html, re.S)
-        premium = True if m and 'is_vip: 1' in m.group(1) else False
+        premium = bool(m and 'is_vip: 1' in m.group(1))
         validuntil = trafficleft = (-1 if m else 0)
         return dict({'validuntil': validuntil, 'trafficleft': trafficleft, 'premium': premium})
 
@@ -35,5 +35,5 @@ class YibaishiwuCom(Account):
                                "login[account]": user,
                                "login[passwd]" : password})
 
-        if not 'var USER_PERMISSION = {' in html:
+        if 'var USER_PERMISSION = {' not in html:
             self.fail_login()

@@ -24,15 +24,11 @@ class ConfigParser:
         
         if not exists(join(self.configdir, "pyload.conf")):
             return False
-        f = open(join(self.configdir, "pyload.conf"), "rb")
-        v = f.readline()
-        f.close()
+        with open(join(self.configdir, "pyload.conf"), "rb") as f:
+            v = f.readline()
         v = v[v.find(":")+1:].strip()
-        
-        if int(v) < CONF_VERSION:
-            return False
-        
-        return True    
+
+        return int(v) >= CONF_VERSION    
         
     #----------------------------------------------------------------------
     def readConfig(self):
@@ -45,85 +41,74 @@ class ConfigParser:
     def parseConfig(self, config):
         """parses a given configfile"""
         
-        f = open(config)
-        
-        config = f.read()
+        with open(config) as f:
+            config = f.read()
 
-        config = config.split("\n")[1:]
-        
-        conf = {}
-        
-        section, option, value, typ, desc = "","","","",""
-        
-        listmode = False
-        
-        for line in config:
-            
-            line = line.rpartition("#") # removes comments
-            
-            if line[1]:
-                line = line[0]
-            else:
-                line = line[2]
-            
-            line = line.strip()            
-            
-            try:
-            
-                if line == "":
-                    continue
-                elif line.endswith(":"):
-                    section, none, desc = line[:-1].partition('-')
-                    section = section.strip()
-                    desc = desc.replace('"', "").strip()
-                    conf[section] = { "desc" : desc }
-                else:
-                    if listmode:
+            config = config.split("\n")[1:]
+
+            conf = {}
+
+            section, option, value, typ, desc = "","","","",""
+
+            listmode = False
+
+            for line in config:
+
+                line = line.rpartition("#") # removes comments
+
+                line = line[0] if line[1] else line[2]
+                line = line.strip()            
+
+                try:
                         
-                        if line.endswith("]"):
-                            listmode = False
-                            line = line.replace("]","")
-                            
-                        value += [self.cast(typ, x.strip()) for x in line.split(",") if x]
-                        
+                    if line == "":
+                        continue
+                    elif line.endswith(":"):
+                        section, none, desc = line[:-1].partition('-')
+                        section = section.strip()
+                        desc = desc.replace('"', "").strip()
+                        conf[section] = { "desc" : desc }
+                    else:
+                        if listmode:
+
+                            if line.endswith("]"):
+                                listmode = False
+                                line = line.replace("]","")
+
+                            value += [self.cast(typ, x.strip()) for x in line.split(",") if x]
+
+                        else:
+                            content, none, value = line.partition("=")
+
+                            content, none, desc = content.partition(":")
+
+                            desc = desc.replace('"', "").strip()
+
+                            typ, option = content.split()
+
+                            value = value.strip()
+
+                            if value.startswith("["):
+                                if value.endswith("]"):                            
+                                    listmode = False
+                                    value = value[:-1]
+                                else:
+                                    listmode = True
+
+                                value = [self.cast(typ, x.strip()) for x in value[1:].split(",") if x]
+                            else:
+                                value = self.cast(typ, value)
+
                         if not listmode:
                             conf[section][option] = { "desc" : desc,
                                                       "type" : typ,
                                                       "value" : value} 
-                        
-                        
-                    else:
-                        content, none, value = line.partition("=")
-                        
-                        content, none, desc = content.partition(":")
-                        
-                        desc = desc.replace('"', "").strip()
-    
-                        typ, option = content.split()
-                                                
-                        value = value.strip()
-                        
-                        if value.startswith("["):
-                            if value.endswith("]"):                            
-                                listmode = False
-                                value = value[:-1]
-                            else:
-                                listmode = True
-                          
-                            value = [self.cast(typ, x.strip()) for x in value[1:].split(",") if x]
-                        else:
-                            value = self.cast(typ, value)
-                        
-                        if not listmode:
-                            conf[section][option] = { "desc" : desc,
-                                                      "type" : typ,
-                                                      "value" : value}
-                
-            except:
-                pass
-                    
-                        
-        f.close()
+
+
+                except:
+                    pass
+
+
         return conf
         
     #----------------------------------------------------------------------
@@ -131,11 +116,11 @@ class ConfigParser:
         """cast value to given format"""
         if type(value) not in (str, unicode):
             return value
-        
-        if typ == "int":
+
+        if typ == "bool":
+            return value.lower() in ("1","true", "on", "an","yes")
+        elif typ == "int":
             return int(value)
-        elif typ == "bool":
-            return True if value.lower() in ("1","true", "on", "an","yes") else False
         else:
             return value
         

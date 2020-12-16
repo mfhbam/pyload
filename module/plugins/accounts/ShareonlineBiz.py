@@ -27,7 +27,7 @@ class ShareonlineBiz(Account):
 
         api = dict(line.split("=") for line in res.splitlines() if "=" in line)
 
-        if not 'a' in api:
+        if 'a' not in api:
             self.fail_login(res.strip('*'))
 
         return api
@@ -45,11 +45,7 @@ class ShareonlineBiz(Account):
         validuntil = float(api_info['expire_date'])
         traffic    = float(api_info['traffic_1d'].split(";")[0])
 
-        if maxtraffic > traffic:
-            trafficleft = maxtraffic - traffic
-        else:
-            trafficleft = -1
-
+        trafficleft = maxtraffic - traffic if maxtraffic > traffic else -1
         maxtraffic  /= 1024  #@TODO: Remove `/ 1024` in 0.4.10
         trafficleft /= 1024  #@TODO: Remove `/ 1024` in 0.4.10
 

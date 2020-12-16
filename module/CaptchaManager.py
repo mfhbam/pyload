@@ -125,10 +125,7 @@ class CaptchaTask():
         self.status = "waiting"
 
     def isWaiting(self):
-        if self.result or self.error or time() > self.waitUntil:
-            return False
-
-        return True
+        return not self.result and not self.error and time() <= self.waitUntil
 
     def isTextual(self):
         """ returns if text is written on the captcha """
@@ -139,10 +136,7 @@ class CaptchaTask():
         return self.captchaResultType == 'positional'
 
     def setWatingForUser(self, exclusive):
-        if exclusive:
-            self.status = "user"
-        else:
-            self.status = "shared-user"
+        self.status = "user" if exclusive else "shared-user"
 
     def timedOut(self):
         return time() > self.waitUntil

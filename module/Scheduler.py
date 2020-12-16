@@ -133,8 +133,7 @@ class PriorityQueue():
         """ return element or None """
         self.lock.acquire()
         try:
-            el = heappop(self.queue)
-            return el
+            return heappop(self.queue)
         except IndexError:
             return None, None
         finally:

@@ -346,12 +346,8 @@ class Plugin(Base):
         img = self.load(url, get=get, post=post, cookies=cookies)
 
         id = ("%.2f" % time())[-6:].replace(".", "")
-        temp_file = open(join("tmp", "tmpCaptcha_%s_%s.%s" % (self.__name__, id, imgtype)), "wb")
-        temp_file.write(img)
-        temp_file.close()
-
-        has_plugin = self.__name__ in self.core.pluginManager.captchaPlugins
-
+        with open(join("tmp", "tmpCaptcha_%s_%s.%s" % (self.__name__, id, imgtype)), "wb") as temp_file:
+            temp_file.write(img)
         if self.core.captcha:
             Ocr = self.core.pluginManager.loadClass("captcha", self.__name__)
         else:
@@ -376,6 +372,8 @@ class Plugin(Base):
                 sleep(1)
 
             captchaManager.removeTask(task)
+
+            has_plugin = self.__name__ in self.core.pluginManager.captchaPlugins
 
             if task.error and has_plugin: #ignore default error message since the user could use OCR
                 self.fail(_("Pil and tesseract not installed and no Client connected for captcha decrypting"))
@@ -421,19 +419,17 @@ class Plugin(Base):
             if not exists(join("tmp", self.__name__)):
                 makedirs(join("tmp", self.__name__))
 
-            f = open(
+            with open(
                 join("tmp", self.__name__, "%s_line%s.dump.html" % (frame.f_back.f_code.co_name, frame.f_back.f_lineno))
-                , "wb")
-            del frame # delete the frame or it wont be cleaned
+                , "wb") as f:
+                del frame # delete the frame or it wont be cleaned
 
-            try:
-                tmp = res.encode("utf8")
-            except:
-                tmp = res
+                try:
+                    tmp = res.encode("utf8")
+                except:
+                    tmp = res
 
-            f.write(tmp)
-            f.close()
-
+                f.write(tmp)
         if just_header:
             #parse header
             header = {"code": self.req.code}
@@ -542,12 +538,10 @@ class Plugin(Base):
         size = stat(lastDownload)
         size = size.st_size
 
-        if api_size and api_size <= size: return None
-        elif size > max_size and not read_size: return None
+        if api_size and api_size <= size or size > max_size and not read_size: return None
         self.log.debug("Download Check triggered")
-        f = open(lastDownload, "rb")
-        content = f.read(read_size if read_size else -1)
-        f.close()
+        with open(lastDownload, "rb") as f:
+            content = f.read(read_size or -1)
         #produces encoding errors, better log to other file in the future?
         #self.log.debug("Content: %s" % content)
         for name, rule in rules.iteritems():

@@ -54,8 +54,7 @@ class DailymotionComFolder(Crypter):
             yield playlist['id']
 
         if user['has_more']:
-            for item in self._get_playlists(user_id, page + 1):
-                yield item
+            yield from self._get_playlists(user_id, page + 1)
 
 
     def get_playlists(self, user_id):
@@ -74,8 +73,7 @@ class DailymotionComFolder(Crypter):
             yield video['url']
 
         if playlist['has_more']:
-            for item in self._get_videos(id, page + 1):
-                yield item
+            yield from self._get_videos(id, page + 1)
 
 
     def get_videos(self, playlist_id):

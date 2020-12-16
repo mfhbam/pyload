@@ -91,34 +91,38 @@ class LinkCryptWs(Crypter):
 
 
     def is_online(self):
-        if "<title>Linkcrypt.ws // Error 404</title>" in self.data:
-            self.log_debug(_("Folder doesn't exist anymore"))
-            return False
-        else:
+        if "<title>Linkcrypt.ws // Error 404</title>" not in self.data:
             return True
+
+        self.log_debug(_("Folder doesn't exist anymore"))
+        return False
 
 
     def is_password_protected(self):
-        if "Authorizing" in self.data:
-            self.log_debug(_("Links are password protected"))
-            return True
-        else:
+        if "Authorizing" not in self.data:
             return False
+
+        self.log_debug(_("Links are password protected"))
+        return True
 
 
     def is_captcha_protected(self):
-        if ('Linkcrypt.ws // Captx' in self.data) or ('Linkcrypt.ws // TextX' in self.data):
-            self.log_debug("Links are captcha protected")
-            return True
-        else:
+        if (
+            'Linkcrypt.ws // Captx' not in self.data
+            and 'Linkcrypt.ws // TextX' not in self.data
+        ):
             return False
+
+        self.log_debug("Links are captcha protected")
+        return True
 
 
     def is_key_captcha_protected(self):
-        if re.search(r'>If the folder does not open after klick on <', self.data, re.I):
-            return True
-        else:
-            return False
+        return bool(
+            re.search(
+                r'>If the folder does not open after klick on <', self.data, re.I
+            )
+        )
 
 
     def unlock_password_protection(self):
@@ -222,7 +226,6 @@ class LinkCryptWs(Crypter):
 
 
     def handle_container(self, container_type):
-        pack_links = []
         container_type = container_type.lower()
 
         self.log_debug(_("Search for %s Container links") % container_type.upper())
@@ -245,7 +248,7 @@ class LinkCryptWs(Crypter):
                 self.pyload.api.uploadContainer('.'.join([pack_name, container_type]), self.load(clink.group(1)))
                 return "Found it"
 
-        return pack_links
+        return []
 
 
     def handle_CNL2(self):

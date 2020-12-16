@@ -125,7 +125,7 @@ class DatabaseNamespaceManager(OpenResourceNamespaceManager):
         self.loaded = True
     
     def do_close(self):
-        if self.flags is not None and (self.flags == 'c' or self.flags == 'w'):
+        if self.flags is not None and self.flags in ['c', 'w']:
             cache = self.cache
             if self._is_new:
                 cache.insert().execute(namespace=self.namespace, data=self.hash,

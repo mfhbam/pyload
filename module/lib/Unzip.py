@@ -40,11 +40,12 @@ class Unzip:
         to extract the file to it. """
         zf = zipfile.ZipFile(file)
 
-        dirs = []
+        dirs = [
+            name.replace("pyload/", "")
+            for name in zf.namelist()
+            if name.endswith('/')
+        ]
 
-        for name in zf.namelist():
-            if name.endswith('/'):
-                dirs.append(name.replace("pyload/",""))
 
         dirs.sort()
         return dirs

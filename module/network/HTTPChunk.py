@@ -206,13 +206,14 @@ class HTTPChunk(HTTPRequest):
         self.header += buf
         #@TODO forward headers?, this is possibly unneeeded, when we just parse valid 200 headers
         # as first chunk, we will parse the headers
-        if not self.range and self.header.endswith("\r\n\r\n"):
-            self.parseHeader()
-        elif not self.range and buf.startswith("150") and "data connection" in buf: #ftp file size parsing
-            size = search(r"(\d+) bytes", buf)
-            if size:
-                self.p.size = int(size.group(1))
-                self.p.chunkSupport = True
+        if not self.range:
+            if self.header.endswith("\r\n\r\n"):
+                self.parseHeader()
+            elif buf.startswith("150") and "data connection" in buf: #ftp file size parsing
+                size = search(r"(\d+) bytes", buf)
+                if size:
+                    self.p.size = int(size.group(1))
+                    self.p.chunkSupport = True
 
         self.headerParsed = True
 

@@ -24,11 +24,11 @@ class FileserveCom(Account):
                                'submit': "Submit+Query"})
         res = json.loads(html)
 
-        if res['type'] == "premium":
-            validuntil = time.mktime(time.strptime(res['expireTime'], "%Y-%m-%d %H:%M:%S"))
-            return {'trafficleft': res['traffic'], 'validuntil': validuntil}
-        else:
+        if res['type'] != "premium":
             return {'premium': False, 'trafficleft': None, 'validuntil': None}
+
+        validuntil = time.mktime(time.strptime(res['expireTime'], "%Y-%m-%d %H:%M:%S"))
+        return {'trafficleft': res['traffic'], 'validuntil': validuntil}
 
 
     def signin(self, user, password, data):

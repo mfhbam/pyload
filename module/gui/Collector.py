@@ -16,6 +16,7 @@
     @author: mkaay
 """
 
+
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
@@ -24,7 +25,7 @@ from module.utils import formatSize
 
 from module.remote.thriftbackend.ThriftClient import Destination, FileDoesNotExists, ElementType
 
-statusMapReverse = dict((v,k) for k, v in statusMap.iteritems())
+statusMapReverse = {v: k for k, v in statusMap.iteritems()}
 
 translatedStatusMap = {} # -> CollectorModel.__init__
 
@@ -154,7 +155,7 @@ class CollectorModel(QAbstractItemModel):
                     for k, child in enumerate(package.children):
                         if child.id == event.id:
                             child.update(info)
-                            if not info.status == 12:
+                            if info.status != 12:
                                 child.data["downloading"] = None
                             self.emit(SIGNAL("dataChanged(const QModelIndex &, const QModelIndex &)"), self.index(k, 0, self.index(p, 0)), self.index(k, self.cols, self.index(p, self.cols)))
                     break
@@ -182,7 +183,7 @@ class CollectorModel(QAbstractItemModel):
                 plugins = []
                 if isinstance(item, Package):
                     for child in item.children:
-                        if not child.data["plugin"] in plugins:
+                        if child.data["plugin"] not in plugins:
                             plugins.append(child.data["plugin"])
                 else:
                     plugins.append(item.data["plugin"])
@@ -201,11 +202,8 @@ class CollectorModel(QAbstractItemModel):
                 item = index.internalPointer()
                 if isinstance(item, Link):
                     return QVariant(formatSize(item.data["size"]))
-                else:
-                    ms = 0
-                    for c in item.children:
-                        ms += c.data["size"]
-                    return QVariant(formatSize(ms))
+                ms = sum(c.data["size"] for c in item.children)
+                return QVariant(formatSize(ms))
         elif role == Qt.EditRole:
             if index.column() == 0:
                 return QVariant(index.internalPointer().data["name"])
@@ -217,16 +215,15 @@ class CollectorModel(QAbstractItemModel):
         """
         if parent == QModelIndex() and len(self._data) > row:
             pointer = self._data[row]
-            index = self.createIndex(row, column, pointer)
+            return self.createIndex(row, column, pointer)
         elif parent.isValid():
             try:
                 pointer = parent.internalPointer().children[row]
             except:
                 return QModelIndex()
-            index = self.createIndex(row, column, pointer)
+            return self.createIndex(row, column, pointer)
         else:
-            index = QModelIndex()
-        return index
+            return QModelIndex()
     
     def parent(self, index):
         """
@@ -250,17 +247,15 @@ class CollectorModel(QAbstractItemModel):
         if parent == QModelIndex():
             #return package count
             return len(self._data)
-        else:
-            if parent.isValid():
-                #index is valid
-                pack = parent.internalPointer()
-                if isinstance(pack, Package):
-                    #index points to a package
-                    #return len of children
-                    return len(pack.children)
-            else:
-                #index is invalid
-                return False
+        if not parent.isValid():
+            #index is invalid
+            return False
+        #index is valid
+        pack = parent.internalPointer()
+        if isinstance(pack, Package):
+            #index points to a package
+            #return len of children
+            return len(pack.children)
         #files have no children
         return 0
     

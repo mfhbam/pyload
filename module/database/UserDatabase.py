@@ -42,7 +42,10 @@ class UserMethods():
 
     @style.queue
     def addUser(db, user, password):
-        salt = reduce(lambda x, y: x + y, [str(random.randint(0, 9)) for i in range(0, 5)])
+        salt = reduce(
+            lambda x, y: x + y, [str(random.randint(0, 9)) for i in range(5)]
+        )
+
         h = sha1(salt + password)
         password = salt + h.hexdigest()
 
@@ -65,7 +68,10 @@ class UserMethods():
         pw = r[2][5:]
         h = sha1(salt + oldpw)
         if h.hexdigest() == pw:
-            salt = reduce(lambda x, y: x + y, [str(random.randint(0, 9)) for i in range(0, 5)])
+            salt = reduce(
+                lambda x, y: x + y, [str(random.randint(0, 9)) for i in range(5)]
+            )
+
             h = sha1(salt + newpw)
             password = salt + h.hexdigest()
 
@@ -87,19 +93,20 @@ class UserMethods():
     @style.queue
     def listUsers(db):
         db.c.execute('SELECT name FROM users')
-        users = []
-        for row in db.c:
-            users.append(row[0])
-        return users
+        return [row[0] for row in db.c]
 
     @style.queue
     def getAllUserData(db):
         db.c.execute("SELECT name, permission, role, template, email FROM users")
-        user = {}
-        for r in db.c:
-            user[r[0]] = {"permission": r[1], "role": r[2], "template": r[3], "email": r[4]}
-
-        return user
+        return {
+            r[0]: {
+                "permission": r[1],
+                "role": r[2],
+                "template": r[3],
+                "email": r[4],
+            }
+            for r in db.c
+        }
 
     @style.queue
     def removeUser(db, user):

@@ -246,10 +246,10 @@ class ConfigParser:
         elif typ == "int":
             return int(value)
         elif typ == "bool":
-            return True if value.lower() in ("1", "true", "on", "an", "yes") else False
+            return value.lower() in ("1", "true", "on", "an", "yes")
         elif typ == "time":
             if not value: value = "0:00"
-            if not ":" in value: value += ":00"
+            if ":" not in value: value += ":00"
             return value
         elif typ in ("str", "file", "folder"):
             try:

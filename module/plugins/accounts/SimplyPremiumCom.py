@@ -23,9 +23,7 @@ class SimplyPremiumCom(MultiAccount):
         json_data = self.load("http://www.simply-premium.com/api/hosts.php", get={'format': "json", 'online': 1})
         json_data = json.loads(json_data)
 
-        host_list = [element['regex'] for element in json_data['result']]
-
-        return host_list
+        return [element['regex'] for element in json_data['result']]
 
 
     def grab_info(self, user, password, data):

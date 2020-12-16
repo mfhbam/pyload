@@ -53,10 +53,7 @@ class XMLParser():
         return content
     
     def parseNode(self, node, ret_type="list"):
-        if ret_type == "dict":
-            childNodes = {}
-        else:
-            childNodes = []
+        childNodes = {} if ret_type == "dict" else []
         child = node.firstChild()
         while True:
             n = child.toElement()

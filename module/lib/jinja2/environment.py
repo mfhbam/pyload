@@ -482,10 +482,7 @@ class Environment(object):
                                     defer_init=defer_init)
             if raw:
                 return source
-            if filename is None:
-                filename = '<template>'
-            else:
-                filename = _encode_filename(filename)
+            filename = '<template>' if filename is None else _encode_filename(filename)
             return self._compile(source, filename)
         except TemplateSyntaxError:
             exc_info = sys.exc_info()
@@ -906,8 +903,7 @@ class Template(object):
         """
         vars = dict(*args, **kwargs)
         try:
-            for event in self.root_render_func(self.new_context(vars)):
-                yield event
+            yield from self.root_render_func(self.new_context(vars))
         except:
             exc_info = sys.exc_info()
         else:
@@ -974,10 +970,7 @@ class Template(object):
                 self._debug_info.split('&')]
 
     def __repr__(self):
-        if self.name is None:
-            name = 'memory:%x' % id(self)
-        else:
-            name = repr(self.name)
+        name = 'memory:%x' % id(self) if self.name is None else repr(self.name)
         return '<%s %s>' % (self.__class__.__name__, name)
 
 
@@ -1006,10 +999,7 @@ class TemplateModule(object):
         return concat(self._body_stream)
 
     def __repr__(self):
-        if self.__name__ is None:
-            name = 'memory:%x' % id(self)
-        else:
-            name = repr(self.__name__)
+        name = 'memory:%x' % id(self) if self.__name__ is None else repr(self.__name__)
         return '<%s %s>' % (self.__class__.__name__, name)
 
 

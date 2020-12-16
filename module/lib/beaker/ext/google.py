@@ -32,8 +32,7 @@ class GoogleNamespaceManager(OpenResourceNamespaceManager):
             table_dict = dict(created=db.DateTimeProperty(),
                               accessed=db.DateTimeProperty(),
                               data=db.BlobProperty())
-            table = type(table_name, (db.Model,), table_dict)
-            return table
+            return type(table_name, (db.Model,), table_dict)
         self.table_name = table_name
         self.cache = GoogleNamespaceManager.tables.setdefault(table_name, make_cache())
         self.hash = {}
@@ -76,7 +75,7 @@ class GoogleNamespaceManager(OpenResourceNamespaceManager):
         self.loaded = True
     
     def do_close(self):
-        if self.flags is not None and (self.flags == 'c' or self.flags == 'w'):
+        if self.flags is not None and self.flags in ['c', 'w']:
             if self._is_new:
                 item = self.cache(key_name=self.namespace)
                 item.data = cPickle.dumps(self.hash)

@@ -110,21 +110,20 @@ if __name__ == '__main__':
         cat = unicodedata.category(c)
         categories.setdefault(cat, []).append(c)
 
-    f = open(__file__, 'w')
-    f.write(header)
+    with open(__file__, 'w') as f:
+        f.write(header)
 
-    for cat in sorted(categories):
-        val = u''.join(categories[cat])
-        if cat == 'Cs':
-            # Jython can't handle isolated surrogates
-            f.write("""\
+        for cat in sorted(categories):
+            val = u''.join(categories[cat])
+            if cat == 'Cs':
+                # Jython can't handle isolated surrogates
+                f.write("""\
 try:
     Cs = eval(r"%r")
 except UnicodeDecodeError:
     Cs = '' # Jython can't handle isolated surrogates\n\n""" % val)
-        else:
-            f.write('%s = %r\n\n' % (cat, val))
-    f.write('cats = %r\n\n' % sorted(categories.keys()))
+            else:
+                f.write('%s = %r\n\n' % (cat, val))
+        f.write('cats = %r\n\n' % sorted(categories.keys()))
 
-    f.write(footer)
-    f.close()
+        f.write(footer)

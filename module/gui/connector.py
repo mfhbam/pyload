@@ -83,17 +83,17 @@ class Connector(QObject):
                 self.emit(SIGNAL("errorBox"), err)
             Connector.firstAttempt = False
             return False
-        
+
         self.proxy = DispatchRPC(self.mutex, client)
         self.connect(self.proxy, SIGNAL("connectionLost"), self, SIGNAL("connectionLost"))
-        
+
         server_version = self.proxy.getServerVersion()
         self.connectionID = uuid().hex
-        
-        if not server_version == SERVER_VERSION:
+
+        if server_version != SERVER_VERSION:
             self.emit(SIGNAL("errorBox"), _("server is version %(new)s client accepts version %(current)s") % { "new": server_version, "current": SERVER_VERSION})
             return False
-        
+
         return True
     
     def __getattr__(self, attr):
@@ -131,8 +131,7 @@ class DispatchRPC(QObject):
         """
         self.mutex.lock()
         self.fname = attr
-        f = self.Wrapper(getattr(self.server, attr), self.mutex, self)
-        return f
+        return self.Wrapper(getattr(self.server, attr), self.mutex, self)
     
     class Wrapper(object):
         """

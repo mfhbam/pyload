@@ -23,11 +23,9 @@ class DatoidCz(Account):
         trafficleft = self.parse_traffic(m.group(1), m.group(2)) if m else 0
 
 
-        info = {'validuntil' : -1,
+        return {'validuntil' : -1,
                 'trafficleft': trafficleft,
                 'premium'    : True}
-
-        return info
 
 
     def signin(self, user, password, data):

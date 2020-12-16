@@ -45,10 +45,7 @@ class NameLock(object):
 
     class NLContainer(object):
         def __init__(self, reentrant):
-            if reentrant:
-                self.lock = _threading.RLock()
-            else:
-                self.lock = _threading.Lock()
+            self.lock = _threading.RLock() if reentrant else _threading.Lock()
         def __call__(self):
             return self.lock
 
@@ -108,12 +105,12 @@ class SynchronizerImpl(object):
             self.reading = False
 
     def state(self):
-        if not self._state.has():
-            state = SynchronizerImpl.SyncState()
-            self._state.put(state)
-            return state
-        else:
+        if self._state.has():
             return self._state.get()
+
+        state = SynchronizerImpl.SyncState()
+        self._state.put(state)
+        return state
     state = property(state)
     
     def release_read_lock(self):
@@ -209,12 +206,8 @@ class FileSynchronizer(SynchronizerImpl):
     def __init__(self, identifier, lock_dir):
         super(FileSynchronizer, self).__init__()
         self._filedescriptor = util.ThreadLocal()
-        
-        if lock_dir is None:
-            lock_dir = tempfile.gettempdir()
-        else:
-            lock_dir = lock_dir
 
+        lock_dir = tempfile.gettempdir() if lock_dir is None else lock_dir
         self.filename = util.encoded_path(
                             lock_dir, 
                             [identifier], 

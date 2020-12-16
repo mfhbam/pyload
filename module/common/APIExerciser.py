@@ -14,7 +14,7 @@ from module.remote.thriftbackend.ThriftClient import ThriftClient, Destination
 def createURLs():
     """ create some urls, some may fail """
     urls = []
-    for x in range(0, randint(20, 100)):
+    for _ in range(randint(20, 100)):
         name = "DEBUG_API"
         if randint(0, 5) == 5:
             name = "" #this link will fail
@@ -30,7 +30,7 @@ sumCalled = 0
 
 
 def startApiExerciser(core, n):
-    for i in range(n):
+    for _ in range(n):
         APIExerciser(core).start()
 
 class APIExerciser(Thread):
@@ -45,12 +45,7 @@ class APIExerciser(Thread):
         self.count = 0 #number of methods
         self.time = time()
 
-        if thrift:
-            self.api = ThriftClient(user=user, password=pw)
-        else:
-            self.api = core.api
-
-
+        self.api = ThriftClient(user=user, password=pw) if thrift else core.api
         self.id = idPool
 
         idPool += 1

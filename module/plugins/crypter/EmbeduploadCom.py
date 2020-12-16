@@ -29,8 +29,6 @@ class EmbeduploadCom(Crypter):
 
     def decrypt(self, pyfile):
         self.data = self.load(pyfile.url)
-        tmp_links = []
-
         m = re.findall(self.LINK_PATTERN, self.data)
         if m is not None:
             prefered_set = set(self.config.get('preferedHoster').split('|'))
@@ -38,7 +36,8 @@ class EmbeduploadCom(Crypter):
 
             self.log_debug("PF: %s" % prefered_set)
 
-            tmp_links.extend(x[1] for x in m if x[0] in prefered_set)
+            tmp_links = [x[1] for x in m if x[0] in prefered_set]
+
             self.links = self.get_location(tmp_links)
 
             if not self.links:

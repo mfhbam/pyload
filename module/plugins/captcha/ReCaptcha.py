@@ -145,11 +145,7 @@ class ReCaptcha(CaptchaService):
 
         font_name = 'arialbd'
 
-        if os.name == 'nt':
-            font = ImageFont.truetype(font_name, 13)
-        else:
-            font = None
-
+        font = ImageFont.truetype(font_name, 13) if os.name == 'nt' else None
         tile_size       = {'width': img.size[0] / 3, 'height': img.size[1] / 3}
         tile_index_size = {'width': draw.textsize('0')[0], 'height': draw.textsize('0')[1]}
 
@@ -195,14 +191,13 @@ class ReCaptcha(CaptchaService):
                 _eol += 1
 
             # if we've wrapped the text, then adjust the wrap to the last word
-            if _eol < len(challenge_msg):
-                _eol = challenge_msg.rfind(" ", 0, _eol)
-                if _eol > 0:
-                    challenge_msg = challenge_msg[:_eol] + '\n' + challenge_msg[_eol+1:]
-                    _sol = _eol+1
-            else:
+            if _eol >= len(challenge_msg):
                 break
 
+            _eol = challenge_msg.rfind(" ", 0, _eol)
+            if _eol > 0:
+                challenge_msg = challenge_msg[:_eol] + '\n' + challenge_msg[_eol+1:]
+                _sol = _eol+1
         message = challenge_msg + '\n(Type image numbers like "258")'
 
         # the text's real height is twice as big as returned by font.getsize() since we use

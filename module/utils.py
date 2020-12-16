@@ -80,7 +80,6 @@ def compare_time(start, end):
     now = list(time.localtime()[3:5])
     if start < now < end: return True
     elif start > end and (now > start or now < end): return True
-    elif start < now > end < start: return True
     else: return False
 
 
@@ -133,11 +132,10 @@ def uniqify(seq, idfun=None):
 def parseFileSize(string, unit=None): #returns bytes
     if not unit:
         m = re.match(r"(\d*[\.,]?\d+)(.*)", string.strip().lower())
-        if m:
-            traffic = float(m.group(1).replace(",", "."))
-            unit = m.group(2)
-        else:
+        if not m:
             return 0
+        traffic = float(m.group(1).replace(",", "."))
+        unit = m.group(2)
     else:
         if isinstance(string, basestring):
             traffic = float(string.replace(",", "."))

@@ -82,27 +82,26 @@ class RequestFactory():
         """ returns a proxy list for the request classes """
         if not self.core.config["proxy"]["proxy"]:
             return {}
-        else:
-            type = "http"
-            setting = self.core.config["proxy"]["type"].lower()
-            if setting == "socks4": type = "socks4"
-            elif setting == "socks5": type = "socks5"
+        type = "http"
+        setting = self.core.config["proxy"]["type"].lower()
+        if setting == "socks4": type = "socks4"
+        elif setting == "socks5": type = "socks5"
 
-            username = None
-            if self.core.config["proxy"]["username"] and self.core.config["proxy"]["username"].lower() != "none":
-                username = self.core.config["proxy"]["username"]
+        username = None
+        if self.core.config["proxy"]["username"] and self.core.config["proxy"]["username"].lower() != "none":
+            username = self.core.config["proxy"]["username"]
 
-            pw = None
-            if self.core.config["proxy"]["password"] and self.core.config["proxy"]["password"].lower() != "none":
-                pw = self.core.config["proxy"]["password"]
+        pw = None
+        if self.core.config["proxy"]["password"] and self.core.config["proxy"]["password"].lower() != "none":
+            pw = self.core.config["proxy"]["password"]
 
-            return {
-                "type": type,
-                "address": self.core.config["proxy"]["address"],
-                "port": self.core.config["proxy"]["port"],
-                "username": username,
-                "password": pw,
-                }
+        return {
+            "type": type,
+            "address": self.core.config["proxy"]["address"],
+            "port": self.core.config["proxy"]["port"],
+            "username": username,
+            "password": pw,
+            }
 
     def getOptions(self):
         """returns options needed for pycurl"""

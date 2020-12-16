@@ -479,7 +479,7 @@ def extract_from_ast(node, gettext_functions=GETTEXT_FUNCTIONS,
             else:
                 strings.append(None)
 
-        for arg in node.kwargs:
+        for _ in node.kwargs:
             strings.append(None)
         if node.dyn_args is not None:
             strings.append(None)
@@ -491,10 +491,7 @@ def extract_from_ast(node, gettext_functions=GETTEXT_FUNCTIONS,
             if not strings:
                 continue
         else:
-            if len(strings) == 1:
-                strings = strings[0]
-            else:
-                strings = tuple(strings)
+            strings = strings[0] if len(strings) == 1 else tuple(strings)
         yield node.lineno, node.node.name, strings
 
 

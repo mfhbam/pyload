@@ -407,10 +407,7 @@ class ModuleLoader(BaseLoader):
         # create a fake module that looks for the templates in the
         # path given.
         mod = _TemplateModule(package_name)
-        if isinstance(path, basestring):
-            path = [path]
-        else:
-            path = list(path)
+        path = [path] if isinstance(path, basestring) else list(path)
         mod.__path__ = path
 
         sys.modules[package_name] = weakref.proxy(mod,

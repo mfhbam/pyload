@@ -138,18 +138,15 @@ class ConnectionManager(QWidget):
     def slotConnect(self):
         if self.internal.checkState() == 2:
             data = {"type": "internal"}
-            self.emit(SIGNAL("connect"), data)
         else:
             item = self.connList.currentItem()
             data = item.data(Qt.UserRole).toPyObject()
             data = self.cleanDict(data)
-            self.emit(SIGNAL("connect"), data)
+
+        self.emit(SIGNAL("connect"), data)
     
     def cleanDict(self, data):
-        tmp = {}
-        for k, d in data.items():
-            tmp[str(k)] = d
-        return tmp
+        return {str(k): d for k, d in data.items()}
     
     def slotSave(self, data):
         self.emit(SIGNAL("saveConnection"), data)
@@ -240,14 +237,11 @@ class ConnectionManager(QWidget):
         
         def setData(self, data):
             if not data: return
-            
+
             self.id = data["id"]
             self.default = data["default"]
             self.controls["name"].setText(data["name"])
-            if data["type"] == "local":
-                data["local"] = True
-            else:
-                data["local"] = False
+            data["local"] = data["type"] == "local"
             self.controls["local"].setChecked(data["local"])
             if not data["local"]:
                 self.controls["user"].setText(data["user"])
@@ -280,19 +274,18 @@ class ConnectionManager(QWidget):
                 self.controls["host"].setDisabled(False)
         
         def getData(self):
-            d = {}
-            d["id"] = self.id
-            d["default"] = self.default
-            d["name"] = self.controls["name"].text()
+            d = {
+                "id": self.id,
+                "default": self.default,
+                "name": self.controls["name"].text(),
+            }
+
             d["local"] = self.controls["local"].isChecked()
             d["user"] = self.controls["user"].text()
             d["password"] = self.controls["password"].text()
             d["host"] = self.controls["host"].text()
             d["port"] = self.controls["port"].value()
-            if d["local"]:
-                d["type"] = "local"
-            else:
-                d["type"] = "remote"
+            d["type"] = "local" if d["local"] else "remote"
             return d
         
         def slotDone(self):

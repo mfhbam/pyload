@@ -100,10 +100,8 @@ class PluginManager:
         for f in listdir(pfolder):
             if (isfile(join(pfolder, f)) and f.endswith(".py") or f.endswith("_25.pyc") or f.endswith(
                 "_26.pyc") or f.endswith("_27.pyc")) and not f.startswith("_"):
-                data = open(join(pfolder, f))
-                content = data.read()
-                data.close()
-
+                with open(join(pfolder, f)) as data:
+                    content = data.read()
                 if f.endswith("_25.pyc") and version_info[0:2] != (2, 5):
                     continue
                 elif f.endswith("_26.pyc") and version_info[0:2] != (2, 6):
@@ -115,36 +113,25 @@ class PluginManager:
                 if name[-1] == ".": name = name[:-4]
 
                 version = self.VERSION.findall(content)
-                if version:
-                    version = float(version[0][1])
-                else:
-                    version = 0
-
+                version = float(version[0][1]) if version else 0
                 # home contains plugins from pyload root
-                if home and name in home:
-                    if home[name]["v"] >= version:
-                        continue
+                if home and name in home and home[name]["v"] >= version:
+                    continue
 
                 if name in IGNORE or (folder, name) in IGNORE:
                      continue
 
-                plugins[name] = {}
-                plugins[name]["v"] = version
-
+                plugins[name] = {"v": version}
                 module = f.replace(".pyc", "").replace(".py", "")
 
                 # the plugin is loaded from user directory
-                plugins[name]["user"] = True if home else False
+                plugins[name]["user"] = bool(home)
                 plugins[name]["name"] = module
 
                 if pattern:
                     pattern = self.PATTERN.findall(content)
 
-                    if pattern:
-                        pattern = pattern[0][1]
-                    else:
-                        pattern = "^unmachtable$"
-
+                    pattern = pattern[0][1] if pattern else "^unmachtable$"
                     plugins[name]["pattern"] = pattern
 
                     try:
@@ -170,10 +157,7 @@ class PluginManager:
                         config = [list(config)]
 
                     if folder == "hooks":
-                        append = True
-                        for item in config:
-                            if item[0] == "activated": append = False
-
+                        append = all(item[0] != "activated" for item in config)
                         # activated flag missing
                         if append: config.append(["activated", "bool", "Activated", False])
 
@@ -344,10 +328,12 @@ class PluginManager:
 
         for type in as_dict.iterkeys():
             for plugin in as_dict[type]:
-                if plugin in self.plugins[type]:
-                    if "module" in self.plugins[type][plugin]:
-                        self.log.debug("Reloading %s" % plugin)
-                        reload(self.plugins[type][plugin]["module"])
+                if (
+                    plugin in self.plugins[type]
+                    and "module" in self.plugins[type][plugin]
+                ):
+                    self.log.debug("Reloading %s" % plugin)
+                    reload(self.plugins[type][plugin]["module"])
 
         #index creation
         self.plugins["crypter"] = self.crypterPlugins = self.parse("crypter", pattern=True)

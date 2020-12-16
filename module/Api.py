@@ -96,10 +96,9 @@ class Api(Iface):
         self.core = core
 
     def _convertPyFile(self, p):
-        f = FileData(p["id"], p["url"], p["name"], p["plugin"], p["size"],
+        return FileData(p["id"], p["url"], p["name"], p["plugin"], p["size"],
                      p["format_size"], p["status"], p["statusmsg"],
                      p["package"], p["error"], p["order"])
-        return f
 
     def _convertConfigFormat(self, c):
         sections = {}
@@ -259,9 +258,8 @@ class Api(Iface):
         """
         filename = join(self.core.config['log']['log_folder'], 'log.txt')
         try:
-            fh = open(filename, "r")
-            lines = fh.readlines()
-            fh.close()
+            with open(filename, "r") as fh:
+                lines = fh.readlines()
             if offset >= len(lines):
                 return []
             return lines[offset:]
@@ -316,11 +314,7 @@ class Api(Iface):
         :param dest: `Destination`
         :return: package id of the new package
         """
-        if self.core.config['general']['folder_per_package']:
-            folder = name
-        else:
-            folder = ""
-
+        folder = name if self.core.config['general']['folder_per_package'] else ""
         folder = folder.replace("http://", "").replace(":", "").replace("/", "_").replace("\\", "_")
 
         pid = self.core.files.addPackage(name, folder, dest)
@@ -402,10 +396,8 @@ class Api(Iface):
         :param data: file content
         :return: online check
         """
-        th = open(join(self.core.config["general"]["download_folder"], "tmp_" + container), "wb")
-        th.write(str(data))
-        th.close()
-
+        with open(join(self.core.config["general"]["download_folder"], "tmp_" + container), "wb") as th:
+            th.write(str(data))
         return self.checkOnlineStatus(urls + [th.name])
 
     @permission(PERMS.ADD)
@@ -417,11 +409,11 @@ class Api(Iface):
         """
         result = self.core.threadManager.getInfoResult(rid)
 
-        if "ALL_INFO_FETCHED" in result:
-            del result["ALL_INFO_FETCHED"]
-            return OnlineCheck(-1, result)
-        else:
+        if "ALL_INFO_FETCHED" not in result:
             return OnlineCheck(rid, result)
+
+        del result["ALL_INFO_FETCHED"]
+        return OnlineCheck(-1, result)
 
 
     @permission(PERMS.ADD)
@@ -431,8 +423,7 @@ class Api(Iface):
         :param links: list of urls
         :return: package names mapped to urls
         """
-        result = parseNames((x, x) for x in links)
-        return result
+        return parseNames((x, x) for x in links)
 
     @permission(PERMS.ADD)
     def generateAndAddPackages(self, links, dest=Destination.Queue):
@@ -470,11 +461,16 @@ class Api(Iface):
         if not data:
             raise PackageDoesNotExists(pid)
 
-        pdata = PackageData(data["id"], data["name"], data["folder"], data["site"], data["password"],
-                            data["queue"], data["order"],
-                            links=[self._convertPyFile(x) for x in data["links"].itervalues()])
-
-        return pdata
+        return PackageData(
+            data["id"],
+            data["name"],
+            data["folder"],
+            data["site"],
+            data["password"],
+            data["queue"],
+            data["order"],
+            links=[self._convertPyFile(x) for x in data["links"].itervalues()],
+        )
 
     @permission(PERMS.LIST)
     def getPackageInfo(self, pid):
@@ -484,15 +480,20 @@ class Api(Iface):
         :return: `PackageData` with .fid attribute
         """
         data = self.core.files.getPackageData(int(pid))
-        
+
         if not data:
             raise PackageDoesNotExists(pid)
 
-        pdata = PackageData(data["id"], data["name"], data["folder"], data["site"], data["password"],
-                            data["queue"], data["order"],
-                            fids=[int(x) for x in data["links"]])
-
-        return pdata
+        return PackageData(
+            data["id"],
+            data["name"],
+            data["folder"],
+            data["site"],
+            data["password"],
+            data["queue"],
+            data["order"],
+            fids=[int(x) for x in data["links"]],
+        )
 
     @permission(PERMS.LIST)
     def getFileData(self, fid):
@@ -505,8 +506,7 @@ class Api(Iface):
         if not info:
             raise FileDoesNotExists(fid)
 
-        fdata = self._convertPyFile(info.values()[0])
-        return fdata
+        return self._convertPyFile(info.values()[0])
 
     @permission(PERMS.DELETE)
     def deleteFiles(self, fids):
@@ -695,10 +695,8 @@ class Api(Iface):
         :param filename: filename, extension is important so it can correctly decrypted
         :param data: file content
         """
-        th = open(join(self.core.config["general"]["download_folder"], "tmp_" + filename), "wb")
-        th.write(str(data))
-        th.close()
-
+        with open(join(self.core.config["general"]["download_folder"], "tmp_" + filename), "wb") as th:
+            th.write(str(data))
         self.addPackage(th.name, [th.name], Destination.Queue)
 
     @permission(PERMS.MODIFY)
@@ -762,7 +760,7 @@ class Api(Iface):
 
         for pid in packs:
             pack = self.core.files.getPackageData(int(pid))
-            while pack["order"] in order.keys(): #just in case
+            while pack["order"] in order: #just in case
                 pack["order"] += 1
             order[pack["order"]] = pack["id"]
         return order
@@ -777,7 +775,7 @@ class Api(Iface):
         rawData = self.core.files.getPackageData(int(pid))
         order = {}
         for id, pyfile in rawData["links"].iteritems():
-            while pyfile["order"] in order.keys(): #just in case
+            while pyfile["order"] in order: #just in case
                 pyfile["order"] += 1
             order[pyfile["order"]] = pyfile["id"]
         return order
@@ -791,7 +789,7 @@ class Api(Iface):
         """
         self.core.lastClientConnected = time()
         task = self.core.captchaManager.getTask()
-        return not task is None
+        return task is not None
 
     @permission(PERMS.STATUS)
     def getCaptchaTask(self, exclusive=False):
@@ -805,8 +803,7 @@ class Api(Iface):
         if task:
             task.setWatingForUser(exclusive=exclusive)
             data, type, result = task.getCaptcha()
-            t = CaptchaTask(int(task.id), standard_b64encode(data), type, result)
-            return t
+            return CaptchaTask(int(task.id), standard_b64encode(data), type, result)
         else:
             return CaptchaTask(-1)
 
@@ -911,7 +908,7 @@ class Api(Iface):
         :param remoteip: Omit this argument, its only used internal
         :return: bool indicating login was successful
         """
-        return True if self.checkAuth(username, password, remoteip) else False
+        return bool(self.checkAuth(username, password, remoteip))
 
     def checkAuth(self, username, password, remoteip=None):
         """Check authentication and returns details
@@ -955,11 +952,16 @@ class Api(Iface):
 
     def getAllUserData(self):
         """returns all known user and info"""
-        res = {}
-        for user, data in self.core.db.getAllUserData().iteritems():
-            res[user] = UserData(user, data["email"], data["role"], data["permission"], data["template"])
-
-        return res
+        return {
+            user: UserData(
+                user,
+                data["email"],
+                data["role"],
+                data["permission"],
+                data["template"],
+            )
+            for user, data in self.core.db.getAllUserData().iteritems()
+        }
 
     @permission(PERMS.STATUS)
     def getServices(self):
@@ -967,11 +969,10 @@ class Api(Iface):
 
         :return: dict with this style: {"plugin": {"method": "description"}}
         """
-        data = {}
-        for plugin, funcs in self.core.hookManager.methods.iteritems():
-            data[plugin] = funcs
-
-        return data
+        return {
+            plugin: funcs
+            for plugin, funcs in self.core.hookManager.methods.iteritems()
+        }
 
     @permission(PERMS.STATUS)
     def hasService(self, plugin, func):

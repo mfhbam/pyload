@@ -77,10 +77,7 @@ class THttpClient(TTransportBase):
     if not hasattr(socket, 'getdefaulttimeout'):
       raise NotImplementedError
 
-    if ms is None:
-      self.__timeout = None
-    else:
-      self.__timeout = ms/1000.0
+    self.__timeout = None if ms is None else ms/1000.0
 
   def read(self, sz):
     return self.__http.file.read(sz)

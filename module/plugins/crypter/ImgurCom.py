@@ -80,16 +80,16 @@ class ImgurCom(SimpleCrypter):
         """ Try to find a list of all images and add those we didn't find already """
         
         # Extract IDs of known direct links
-        ids_direct = set([l for link in links_direct for l in re.findall(r'(\w{7})', link)])
-        
+        ids_direct = {l for link in links_direct for l in re.findall(r'(\w{7})', link)}
+
         # Get filename extensions for new IDs
         ids_json = self.get_ids_from_json()
         ids_indirect = [id for id in ids_json.keys() if id not in ids_direct]
 
         # No additional images found
-        if len(ids_indirect) == 0 :
+        if not ids_indirect:
             return []
-        
+
         # Translate new IDs to Direct-URLs
         return map(lambda id: "http://i.imgur.com/%s%s" % (id, ids_json[id]), ids_indirect)
 

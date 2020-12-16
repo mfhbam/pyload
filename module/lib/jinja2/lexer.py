@@ -249,10 +249,7 @@ class Token(tuple):
 
     def test_any(self, *iterable):
         """Test against multiple token expressions."""
-        for expr in iterable:
-            if self.test(expr):
-                return True
-        return False
+        return any(self.test(expr) for expr in iterable)
 
     def __repr__(self):
         return 'Token(%r, %r, %r)' % (
@@ -319,7 +316,7 @@ class TokenStream(object):
 
     def skip(self, n=1):
         """Got n tokens ahead."""
-        for x in xrange(n):
+        for _ in xrange(n):
             next(self)
 
     def next_if(self, expr):

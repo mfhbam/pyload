@@ -52,8 +52,7 @@ class NewPackageDock(QDockWidget):
         self.widget.box.setText("")
         result = re.findall(r"(?:ht|f)tps?:\/\/[a-zA-Z0-9\-\.\/\?=_&%#]+[<| |\"|\'|\r|\n|\t]{1}", text)
         for url in result:
-            if "\n" or "\t" or "\r" or "\"" or "<" or "'" in url:
-                url = url[:-1]
+            url = url[:-1]
             self.widget.box.append("%s " % url)
 
 class NewPackageWindow(QWidget):

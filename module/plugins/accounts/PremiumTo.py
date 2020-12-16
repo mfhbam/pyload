@@ -31,11 +31,11 @@ class PremiumTo(MultiAccount):
                             get={'username': user,
                                  'password': password})
 
-        if "wrong username" not in traffic:
-            trafficleft = sum(map(float, traffic.split(';'))) / 1024  #@TODO: Remove `/ 1024` in 0.4.10
-            return {'premium': True, 'trafficleft': trafficleft, 'validuntil': -1}
-        else:
+        if "wrong username" in traffic:
             return {'premium': False, 'trafficleft': None, 'validuntil': None}
+
+        trafficleft = sum(map(float, traffic.split(';'))) / 1024  #@TODO: Remove `/ 1024` in 0.4.10
+        return {'premium': True, 'trafficleft': trafficleft, 'validuntil': -1}
 
 
     def signin(self, user, password, data):

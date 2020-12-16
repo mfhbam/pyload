@@ -84,7 +84,7 @@ class JsEngine():
         self.init = False
 
     def __nonzero__(self):
-        return False if not ENGINE else True
+        return bool(ENGINE)
 
     def eval(self, script):
         if not self.init:
@@ -141,8 +141,7 @@ class JsEngine():
         script = "print(eval(unescape('%s')))" % quote(script)
         p = subprocess.Popen(["js", "-e", script], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, bufsize=-1)
         out, err = p.communicate()
-        res = out.strip()
-        return res
+        return out.strip()
 
     def eval_rhino(self, script):
         script = "print(eval(unescape('%s')))" % quote(script)

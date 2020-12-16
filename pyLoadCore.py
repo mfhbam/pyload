@@ -173,7 +173,7 @@ class Core(object):
         if self.threadManager.pause:
             self.threadManager.pause = False
             return False
-        elif not self.threadManager.pause:
+        else:
             self.threadManager.pause = True
             return True
 
@@ -185,9 +185,8 @@ class Core(object):
     def writePidFile(self):
         self.deletePidFile()
         pid = os.getpid()
-        f = open(self.pidfile, "wb")
-        f.write(str(pid))
-        f.close()
+        with open(self.pidfile, "wb") as f:
+            f.write(str(pid))
 
     def deletePidFile(self):
         if self.checkPidFile():
@@ -197,9 +196,8 @@ class Core(object):
     def checkPidFile(self):
         """ return pid as int or 0"""
         if os.path.isfile(self.pidfile):
-            f = open(self.pidfile, "rb")
-            pid = f.read().strip()
-            f.close()
+            with open(self.pidfile, "rb") as f:
+                pid = f.read().strip()
             if pid:
                 pid = int(pid)
                 return pid

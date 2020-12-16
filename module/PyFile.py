@@ -280,6 +280,6 @@ class PyFile(object):
         self.m.core.pullManager.addEvent(e)
 
     def setProgress(self, value):
-        if not value == self.progress:
+        if value != self.progress:
             self.progress = value
             self.notifyChange()

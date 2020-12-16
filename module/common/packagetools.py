@@ -11,8 +11,7 @@ def matchFirst(string, *args):
         for pattern in patternlist:
             r = pattern.search(string)
             if r is not None:
-                name = r.group(1)
-                return name
+                return r.group(1)
 
     return string
 

@@ -44,5 +44,5 @@ class MegasharesCom(Account):
                                'mymslogin_name': user,
                                'mymspassword'  : password})
 
-        if not '<span class="b ml">%s</span>' % user in html:
+        if '<span class="b ml">%s</span>' % user not in html:
             self.fail_login()
